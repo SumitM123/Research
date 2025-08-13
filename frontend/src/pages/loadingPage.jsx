@@ -1,5 +1,5 @@
 import React from 'react';
-
+const axios = require('axios');
 const loaderStyle = {
   display: 'flex',
   flexDirection: 'column',
@@ -35,7 +35,12 @@ const subTextStyle = {
   letterSpacing: '1px',
 };
 
-const LoadingPage = () => (
+const LoadingPage = () => {
+  //Send a request to the backend to start processing the files
+  axios.post('/processFiles', {
+    
+  });
+  return (
   <div style={loaderStyle}>
     <style>
       {`
@@ -49,6 +54,6 @@ const LoadingPage = () => (
     <div style={textStyle}>Loading...</div>
     <div style={subTextStyle}>Please wait while we prepare your data</div>
   </div>
-);
-
+  );
+}
 export default LoadingPage;

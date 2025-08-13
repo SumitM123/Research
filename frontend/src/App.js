@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import './App.css';
 import { useNavigate } from 'react-router-dom';
-
+import { useFilesInfo } from './Components/Context.js';
 function App() {
-  const [databaseFile, setDatabaseFile] = useState(null);
-  const [dataFile, setDataFile] = useState(null);
+  // This is the custom for the context
+  const fileInfo = useFilesInfo();
+  const { databaseFile, setDatabaseFile, dataFile, setDataFile } = fileInfo;
+
   const navigate = useNavigate(); 
 
   const isCSV = (file) => {
