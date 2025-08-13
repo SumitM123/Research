@@ -7,6 +7,10 @@ function App() {
   const [dataFile, setDataFile] = useState(null);
   const navigate = useNavigate(); 
 
+  const isCSV = (file) => {
+    return file && file.name.toLowerCase().endsWith('.csv');
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault(); 
 
@@ -18,6 +22,16 @@ function App() {
       return;
     } else if (!dataFile) {
       alert("Please upload the data collection file.");
+      return;
+    }
+
+    // Check that both are CSV files
+    if (!isCSV(databaseFile)) {
+      alert("Database file must be a .csv file.");
+      return;
+    }
+    if (!isCSV(dataFile)) {
+      alert("Data collection file must be a .csv file.");
       return;
     }
 
