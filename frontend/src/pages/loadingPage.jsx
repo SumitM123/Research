@@ -1,5 +1,6 @@
 import React from 'react';
 const axios = require('axios');
+const {useFilesInfo} = require('../Components/Context.js');
 const loaderStyle = {
   display: 'flex',
   flexDirection: 'column',
@@ -37,8 +38,12 @@ const subTextStyle = {
 
 const LoadingPage = () => {
   //Send a request to the backend to start processing the files
+  const fileInfo = useFilesInfo();
+  const { databaseFile, dataFile } = fileInfo;
+
   axios.post('/processFiles', {
-    
+    databaseFile: databaseFile,
+    dataFile: dataFile
   });
   return (
   <div style={loaderStyle}>
