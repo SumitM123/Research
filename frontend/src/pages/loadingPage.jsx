@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useFilesInfo } from '../Components/Context.js';
+import { useFilesInfo } from '../Components/filesContext.js';
 import { useNavigate } from 'react-router-dom';
 
 const loaderStyle = {

@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import { useNavigate } from 'react-router-dom';
-import { useFilesInfo } from './Components/Context.js';
+import { useFilesInfo } from './Components/filesContext.js';
 function App() {
   // This is the custom for the context
   const fileInfo = useFilesInfo();
@@ -13,7 +13,7 @@ function App() {
     return file && file.name.toLowerCase().endsWith('.csv');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault(); 
 
     if (!databaseFile && !dataFile) {
@@ -39,6 +39,19 @@ function App() {
 
     if(dataFileColumn === "" || dataBaseFileColumn === "" || description === "") {
       alert("Please fill in all the fields.");
+      return;
+    }
+    const formData = new FormData(e.target);
+    try {
+      const response = await axios.post("/processFiles", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data' 
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert("Error uploading files. Please try again.");
       return;
     }
     navigate('/loading');

@@ -5,17 +5,20 @@ import LoadingPage from './pages/loadingPage.jsx';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { FilesProvider } from './Components/Context.js';
+import { FilesProvider } from './Components/filesContext.js';
+import {ColumnInfoProvider} from './Components/columnInfoContext.js';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <FilesProvider>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/loading" element={<LoadingPage />} />
-      </Routes>
-    </BrowserRouter>
+      <ColumnInfoProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<App />} />
+            <Route path="/loading" element={<LoadingPage />} />
+          </Routes>
+        </BrowserRouter>
+      </ColumnInfoProvider>
     </FilesProvider>
   </React.StrictMode>
 );
