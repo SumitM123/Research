@@ -2,11 +2,11 @@ import { createContext, useState, useContext } from "react";
 
 const columnInfo = createContext();
 
-// This is the custom hook to use the files context
-export const useColumnInfo= () => {
-    const context = useContext(filesInfo);
+// This is the custom hook to use the column info context
+export const useColumnInfo = () => {
+    const context = useContext(columnInfo);
     if (!context) {
-        throw new Error("useFilesInfo must be used within a FilesProvider");
+        throw new Error("useColumnInfo must be used within a ColumnInfoProvider");
     }
     return context;
 }

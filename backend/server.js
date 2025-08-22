@@ -9,7 +9,8 @@ const morgan = require('morgan');
 const multer = require('multer');
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 const { SystemMessage, HumanMessage } = require('@langchain/core/messages');
-const  { CSVLoader } = require('@langchain_community.document_loaders'); // Assuming you have a CSVLoader utility
+//const papa = require('papaparse');  // For CSV parsing
+//const csvLoader = require('csvloader');
 const googleGemini = new ChatGoogleGenerativeAI({ 
   model: "gemini-2.5-flash",
   apiKey: process.env.GEMINI_API_KEY});
@@ -35,7 +36,17 @@ app.use(express.urlencoded({ extended: true }));
 const storage = multer.diskStorage(
   {
     destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, 'uploads'));;
+        const directoryPath = path.join(__dirname, 'uploads');
+        fs.mkdir(directoryPath, {
+          recursive: false,
+        }).then(onFulfilled => {
+          console.log("Made the uploads directory.");
+          return;
+        }).catch(onRejected => {
+          console.log("Upload directory already exists");
+          return;
+        });
+      cb(null, path.join(__dirname, 'uploads'));
     },  
     filename: (req, file, cb) => {
       cb(null, file.originalname);
@@ -75,7 +86,6 @@ app.post('/processFiles', upload.fields([
     if (!req.files || !req.files.dataFile || !req.files.dataBaseFile) {
       return res.status(400).json({ message: 'Both dataFile and dataBaseFile are required' });
     }
-    //getting the files from the request. These are buffer objects
     const dataFilePath = req.files.dataFile[0].path;
     const dataBaseFilePath = req.files.dataBaseFile[0].path;
 
@@ -84,28 +94,23 @@ app.post('/processFiles', upload.fields([
     const dataBaseFileColumn = req.body.dataBaseFileColumn;
     const description = req.body.description;
    
-    const dataFileLoader = CSVLoader({filePath: dataFilePath});
-    const dataBaseFileLoader = CSVLoader({filePath: dataBaseFilePath});
+    const dataFileContent = fs.readFileSync(dataFilePath, 'utf8');
+    const dataBaseFileContent = fs.readFileSync(dataBaseFilePath, 'utf8');
 
-    // List of Document objects
-    const dataDocuments = dataFileLoader.load()
-    const dataBaseDocuments = dataBaseFileLoader.load();
+    // Parse CSV files
+    const dataFileData = papa.parse(dataFileContent, { header: true });
+    const dataBaseFileData = papa.parse(dataBaseFileContent, { header: true });
 
-    let contentData = "";
-    for(const doc of dataDocuments) {
-      contentData += doc.pageContent + "\n";
-    }
-    let contentDataBase = "";
-    for(const doc of dataBaseDocuments) {
-      contentDataBase += doc.pageContent + "\n";
-    }
+    // Convert to string for Gemini
+    const contentData = JSON.stringify(dataFileData.data, null, 2);
+    const contentDataBase = JSON.stringify(dataBaseFileData.data, null, 2);
     
     //Determining if the files are valid
     if(dataDocuments[0] === undefined || dataBaseDocuments[0] === undefined) {
       return res.status(400).json({ message: 'Invalid CSV files provided' });
     }
     //checking if the columns exist in the files
-    if(!dataDocuments.pageContent.includes(dataFileColumn) || !dataBaseDocuments.pageContent.includes(dataBaseFileColumn)) { {
+    if(!dataDocuments.pageContent.includes(dataFileColumn) || !dataBaseDocuments.pageContent.includes(dataBaseFileColumn)) {
       return res.status(400).json({message: 'Specified columns not found in the provided CSV files. Please ensure the columns exist and is exactly spelled as you provided.'});
     }
     //extracting the columns from the files
@@ -151,17 +156,20 @@ app.post('/processFiles', upload.fields([
       message: 'Error processing files',
       error: error.message
     });
-  } 
-    // Clean up uploaded fi
+  }
+});
 
-    /* 
+app.get('/extractData', async (req, res) => {
+  message = [
+    new SystemMessage(`You are a helpful assistant that extracts data from CSV files.
+      
     You are given two CSV files. One is a database file, and another is a data collection file. You're task is to extract data from the database file based on the criteria of the data collection file. I'm going to
     be saying dataFile and dataBaseFile. The dataFile is the data collection file, and the dataBaseFile is the database file.
 
       Topic of interest: {topic}
 
-Your task:
-  For each row in dataFile.csv, read the value in the ${dataFileColumn} column. Based on that value, find the corresponding value in the ${dataBaseFileColumn} column in dataBaseFile.csv.
+    Your task:
+    For each row in dataFile.csv, read the value in the ${dataFileColumn} column. Based on that value, find the corresponding value in the ${dataBaseFileColumn} column in dataBaseFile.csv.
     There are three types of matches. For the examples being provided, assume the topic of interest is "Food":
     1. Close match:
       For a match to be considered close, it doesn't have to be an exact match, it just has be similar enough to be considered a close match. For example, if the value in the dataFile.csv is "Apple", it could match with "apple", "Apple", "APPLE", "apple ", "apple.", or
@@ -198,61 +206,53 @@ Your task:
     If there are multiple matches, choose the one that's the best match. A best 
     match is con
 
-Search for the  matching Food Name in dataBaseFile.csv (case-insensitive match, ignoring extra spaces, punctuation differences like hyphens vs. spaces, and bracketed descriptors like [Red] if necessary).
+    Search for the  matching Food Name in dataBaseFile.csv (case-insensitive match, ignoring extra spaces, punctuation differences like hyphens vs. spaces, and bracketed descriptors like [Red] if necessary).
 
-When a match is found, take the corresponding Food ID from dataBaseFile.csv and insert it into that row’s Polyphenol Food ID column in dataFile.csv.
+    When a match is found, take the corresponding Food ID from dataBaseFile.csv and insert it into that row’s Polyphenol Food ID column in dataFile.csv.
 
-If no match is found, leave the Polyphenol Food ID cell as it is.
+    If no match is found, leave the Polyphenol Food ID cell as it is.
 
-Preserve all other columns and rows exactly as they are.
+    Preserve all other columns and rows exactly as they are.
 
-Output the updated dataFile.csv with the filled Polyphenol Food ID values.
+    Output the updated dataFile.csv with the filled Polyphenol Food ID values.
 
-Special matching rules:
+    Special matching rules:
 
-Match should be exact after applying case normalization and removing minor formatting differences.
+    Match should be exact after applying case normalization and removing minor formatting differences.
 
-If multiple matches exist in dataBaseFile.csv, choose the first one that appears in order.
+    If multiple matches exist in dataBaseFile.csv, choose the first one that appears in order.
 
-Do not change the Polyphenol Match Confidence values — leave them as is.
+    Do not change the Polyphenol Match Confidence values — leave them as is.
 
-Return the updated CSV as valid UTF-8 text.
-  */
- // Ask the user 
-  message = [
-    new SystemMessage(`You are a helpful assistant that extracts data from CSV files.`),
+    Return the updated CSV as valid UTF-8 text.
+    `),
     new HumanMessage(`Process the following files: ${dataFile} and ${dataBaseFile}`)
   ];
   
-    try {
-      const response = await googleGemini.invoke(message);
-      res.status(200).json({ 
-        message: 'Files processed successfully', 
-        data: response 
-      });
-    } catch (error) {
-      console.error('Error processing with Gemini:', error);
-      res.status(500).json({ 
-        message: 'Error processing files', 
-        error: error.message 
-      });
-    }
+  try {
+    const response = await googleGemini.invoke(message);
+    res.status(200).json({ 
+      message: 'Files processed successfully', 
+      data: response 
+    });
   } catch (error) {
-    console.error('Error handling files:', error);
+    console.error('Error processing with Gemini:', error);
     res.status(500).json({ 
-      message: 'Error handling files', 
+      message: 'Error processing files', 
       error: error.message 
     });
   }
-
-  path.unlink(dataFilePath, (err) => {
-    if (err) console.error('Error deleting dataFile:', err);
+  fs.rmdir(path.join(__dirname, 'uploads'), {
+    recursive: false
+  }).then(isfulFilled => {
+    console.log("Successfully deleted the upload directory.")
+    return;
+  }).catch(isRejected => {
+    console.log("Failed to delete the upload directory. ");
+    return;
   });
-  path.unlink(dataBaseFilePath, (err) => {
-    if (err) console.error('Error deleting dataBaseFile:', err);
-  });
-
 });
+  // Ask the user 
 
 // Error handling middleware
 app.use((err, req, res, next) => {
