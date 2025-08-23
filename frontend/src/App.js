@@ -42,26 +42,34 @@ function App() {
       alert("Please fill in all the fields.");
       return;
     }
-    const formData = new FormData(e.target);
+    const formData = new FormData();
+    formData.append('dataFile', dataFile);
+    formData.append('dataBaseFile', databaseFile);
+    formData.append('dataFileColumn', dataFileColumn);
+    formData.append('dataBaseFileColumn', dataBaseFileColumn);
+    formData.append('description', description);
+
     try {
       const response = await axios.post("/processFiles", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data' 
+          'Content-Type': 'multipart/form-data'
         }
       });
-      
+      console.log(JSON.stringify(response.data));
+      //console.log(response.data);
     } catch (error) {
       console.error('Error uploading files:', error);
-      alert("Error uploading files. Please try again.");
+      //alert("Error uploading files. Please try again.");
       return;
     }
+
     navigate('/loading');
   };
 
   return (
     <div className="app-container">
       <h1 className="title">CSV Data Extractor</h1>
-      <form className="upload-form" onSubmit={handleSubmit} action="/processFiles" method="post" enctype="multipart/form-data">
+      <form className="upload-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label className="label">
             Database File (.csv):
@@ -93,7 +101,7 @@ function App() {
               className="file-input"
               type="text"
               onChange={(e) => setDataFileColumn(e.target.value)}
-              name="dataFile"
+              name="dataFileColumn"
             />
           </label>
         </div>
@@ -104,24 +112,13 @@ function App() {
               className="file-input"
               type="text"
               onChange={(e) => setDataBaseFileColumn(e.target.value)}
-              name="dataBaseFile"
+              name="dataBaseFileColumn"
             />
           </label>
         </div>
         <div className="form-group">
           <label className="label">
-            Database File Column to Match:
-            <input
-              className="file-input"
-              type="text"
-              onChange={(e) => setDataBaseFileColumn(e.target.value)}
-              name="dataBaseFile"
-            />
-          </label>
-        </div>
-        <div className="form-group">
-          <label className="label">
-            Please enter specifically on what to collect from the database file and respectively input to where in the data file:
+            Description:
             <input
               className="file-input"
               type="text"
@@ -130,8 +127,11 @@ function App() {
             />
           </label>
         </div>
-        <button className="submit-button" type="submit">Extract Data</button>
+        <button className="submit-button" type="submit">
+          Extract Data
+        </button>
       </form>
+
     </div>
   );
 }

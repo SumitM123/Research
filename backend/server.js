@@ -9,10 +9,9 @@ const morgan = require('morgan');
 const multer = require('multer');
 const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
 const { SystemMessage, HumanMessage } = require('@langchain/core/messages');
-//const papa = require('papaparse');  // For CSV parsing
-//const csvLoader = require('csvloader');
+const papa = require('papaparse');  // For CSV parsing
 const googleGemini = new ChatGoogleGenerativeAI({ 
-  model: "gemini-2.5-flash",
+  model: "gemini-pro",
   apiKey: process.env.GEMINI_API_KEY});
 
 const app = express();
@@ -33,20 +32,14 @@ app.use(express.urlencoded({ extended: true }));
 //File Upload Setup
 
 //change the storage to DiskStorage, so that you get the actual file instead of a buffer object 
+const uploadDir = path.join(__dirname, "uploads")
+if(!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 const storage = multer.diskStorage(
   {
     destination: (req, file, cb) => {
-        const directoryPath = path.join(__dirname, 'uploads');
-        fs.mkdir(directoryPath, {
-          recursive: false,
-        }).then(onFulfilled => {
-          console.log("Made the uploads directory.");
-          return;
-        }).catch(onRejected => {
-          console.log("Upload directory already exists");
-          return;
-        });
-      cb(null, path.join(__dirname, 'uploads'));
+      cb(null, uploadDir);
     },  
     filename: (req, file, cb) => {
       cb(null, file.originalname);
@@ -79,8 +72,7 @@ const dataFileColumnArr = [];
 const dataBaseFileColumnArr = [];
 app.post('/processFiles', upload.fields([
   { name: "dataFile", maxCount: 1 }, 
-  { name: "dataBaseFile", maxCount: 1 },
-  { name: "description"},
+  { name: "dataBaseFile", maxCount: 1 }
 ]), async (req, res) => {  
   try {
     if (!req.files || !req.files.dataFile || !req.files.dataBaseFile) {
@@ -89,39 +81,61 @@ app.post('/processFiles', upload.fields([
     const dataFilePath = req.files.dataFile[0].path;
     const dataBaseFilePath = req.files.dataBaseFile[0].path;
 
+    // console.log("Here is the dataFile path: " + dataFilePath);
+    // console.log("Here is the dataBaseFile path: " + dataBaseFilePath);
     
     const dataFileColumn = req.body.dataFileColumn;
     const dataBaseFileColumn = req.body.dataBaseFileColumn;
     const description = req.body.description;
    
+    // console.log("Request body:", req.body);
+    // console.log("DataFile Column:", dataFileColumn);
+    // console.log("DataBaseFile Column:", dataBaseFileColumn);
+    // console.log("Description:", description);
+
+    if (!dataFileColumn || !dataBaseFileColumn || !description) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        received: {
+          dataFileColumn,
+          dataBaseFileColumn,
+          description
+        }
+      });
+    }
+
+    //console.log(JSON.stringify(req.body));
     const dataFileContent = fs.readFileSync(dataFilePath, 'utf8');
     const dataBaseFileContent = fs.readFileSync(dataBaseFilePath, 'utf8');
 
-    // Parse CSV files
-    const dataFileData = papa.parse(dataFileContent, { header: true });
-    const dataBaseFileData = papa.parse(dataBaseFileContent, { header: true });
+    const dataFileSplit = dataFileContent.split('\n');
+    const dataBaseFileSplit = dataBaseFileContent.split('\n');
 
-    // Convert to string for Gemini
-    const contentData = JSON.stringify(dataFileData.data, null, 2);
-    const contentDataBase = JSON.stringify(dataBaseFileData.data, null, 2);
+    const dataDocuments = [dataFileSplit[0], dataFileSplit[1]];
+    const dataBaseDocuments = [dataBaseFileSplit[0], dataBaseFileSplit[1]];
+
+    // // Convert to string for Gemini
+    // const contentData = JSON.stringify(dataFileData.data, null, 2);
+    // const contentDataBase = JSON.stringify(dataBaseFileData.data, null, 2);
     
     //Determining if the files are valid
     if(dataDocuments[0] === undefined || dataBaseDocuments[0] === undefined) {
       return res.status(400).json({ message: 'Invalid CSV files provided' });
     }
     //checking if the columns exist in the files
-    if(!dataDocuments.pageContent.includes(dataFileColumn) || !dataBaseDocuments.pageContent.includes(dataBaseFileColumn)) {
+    if(!dataDocuments[0].includes(dataFileColumn) || !dataBaseDocuments[0].includes(dataBaseFileColumn)) {
       return res.status(400).json({message: 'Specified columns not found in the provided CSV files. Please ensure the columns exist and is exactly spelled as you provided.'});
     }
+    console.log("Checking if columns exist");
     //extracting the columns from the files
-    dataFileColumnArr = dataDocuments[0].pageContent.split(',');
-    dataBaseFileColumnArr = dataBaseDocuments[0].pageContent.split(',');
+    dataFileColumnArr = dataDocuments[0].split(',');
+    dataBaseFileColumnArr = dataBaseDocuments[0].split(',');
 
     if(dataDocuments[1] === undefined) {
       return res.status(400).json({message: 'No data found in the provided CSV files. Please ensure the files are not empty.'});
     }
 
-    const columnsToMatch = dataDocuments[1].pageContent.split(',');
+    const columnsToMatch = dataDocuments[1].split(',');
     const diffBetweenColumns = dataFileColumnArr.length - columnsToMatch.length;
     if(diffBetweenColumns <= 0) {
       return res.status(400).json({message: 'No columns to match found in the provided CSV files. Please ensure the files are not empty.'});
@@ -132,7 +146,7 @@ app.post('/processFiles', upload.fields([
     }
 
     
-    const columnsToMatch2 = dataBaseDocuments[1].pageContent.split(',');
+    const columnsToMatch2 = dataBaseDocuments[1].split(',');
     const diffBetweenColumns2 = dataBaseFileColumnArr.length - columnsToMatch2.length;
     if(diffBetweenColumns2 <= 0) {
       return res.status(400).json({message: 'No columns to match found in the provided CSV files. Please ensure the files are not empty.'});
@@ -149,7 +163,8 @@ app.post('/processFiles', upload.fields([
         dataBaseFileColumnArr,
         potentialToMatch,
         potentialToMatch2,
-      }});
+      }
+    });
   } catch (error) {
     console.error('Error processing files:', error);
     res.status(500).json({
