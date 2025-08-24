@@ -2,10 +2,12 @@ import React from 'react';
 import './App.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useFilesInfo } from './Components/filesContext.js';
+import { useFilesInfo } from './Contexts/filesContext.js';
+import { useColumnInfo } from './Contexts/columnInfoContext.js'
 function App() {
   // This is the custom for the context
   const fileInfo = useFilesInfo();
+  const columnInfo = useColumnInfo();
   const { databaseFile, setDatabaseFile, dataFile, setDataFile, dataFileColumn, setDataFileColumn, dataBaseFileColumn, setDataBaseFileColumn, description, setDescription} = fileInfo;
 
   const navigate = useNavigate(); 
@@ -55,8 +57,14 @@ function App() {
           'Content-Type': 'multipart/form-data'
         }
       });
+
+      fileInfo.setDataFileAvailableTopics(response.data.dataFileHeaders);
+      fileInfo.setDataBaseFileAvailableTopics(response.data.dataBaseFileHeaders);
+      
       console.log(JSON.stringify(response.data));
+
       //console.log(response.data);
+      console.log("Response from server" + response.message);
     } catch (error) {
       console.error('Error uploading files:', error);
       //alert("Error uploading files. Please try again.");

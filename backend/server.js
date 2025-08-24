@@ -12,7 +12,8 @@ const { SystemMessage, HumanMessage } = require('@langchain/core/messages');
 const papa = require('papaparse');  // For CSV parsing
 const googleGemini = new ChatGoogleGenerativeAI({ 
   model: "gemini-pro",
-  apiKey: process.env.GEMINI_API_KEY});
+  apiKey: process.env.GEMINI_API_KEY
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -59,120 +60,110 @@ const upload = multer({
 });
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mern-app';
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
-  })
-  .catch((error) => {
-    console.error('❌ MongoDB connection error:', error);
-  });
+// const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mern-app';
+// mongoose.connect(MONGODB_URI)
+//   .then(() => {
+//     console.log('✅ Connected to MongoDB');
+//   })
+//   .catch((error) => {
+//     console.error('❌ MongoDB connection error:', error);
+//   });
 
 const dataFileColumnArr = [];
 const dataBaseFileColumnArr = [];
-app.post('/processFiles', upload.fields([
-  { name: "dataFile", maxCount: 1 }, 
-  { name: "dataBaseFile", maxCount: 1 }
-]), async (req, res) => {  
-  try {
-    if (!req.files || !req.files.dataFile || !req.files.dataBaseFile) {
-      return res.status(400).json({ message: 'Both dataFile and dataBaseFile are required' });
-    }
-    const dataFilePath = req.files.dataFile[0].path;
-    const dataBaseFilePath = req.files.dataBaseFile[0].path;
+app.post(
+  "/processFiles",
+  upload.fields([
+    { name: "dataFile", maxCount: 1 },
+    { name: "dataBaseFile", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      // Ensure both files exist
+      if (!req.files || !req.files.dataFile || !req.files.dataBaseFile) {
+        return res.status(400).json({
+          message: "Both dataFile and dataBaseFile are required",
+        });
+      }
 
-    // console.log("Here is the dataFile path: " + dataFilePath);
-    // console.log("Here is the dataBaseFile path: " + dataBaseFilePath);
-    
-    const dataFileColumn = req.body.dataFileColumn;
-    const dataBaseFileColumn = req.body.dataBaseFileColumn;
-    const description = req.body.description;
-   
-    // console.log("Request body:", req.body);
-    // console.log("DataFile Column:", dataFileColumn);
-    // console.log("DataBaseFile Column:", dataBaseFileColumn);
-    // console.log("Description:", description);
+      const dataFilePath = req.files.dataFile[0].path;
+      const dataBaseFilePath = req.files.dataBaseFile[0].path;
 
-    if (!dataFileColumn || !dataBaseFileColumn || !description) {
-      return res.status(400).json({ 
-        message: 'Missing required fields',
-        received: {
-          dataFileColumn,
-          dataBaseFileColumn,
-          description
+      const { dataFileColumn, dataBaseFileColumn, description } = req.body;
+
+      // Validate required fields
+      if (!dataFileColumn || !dataBaseFileColumn || !description) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          received: { dataFileColumn, dataBaseFileColumn, description },
+        });
+      }
+
+      // Read file contents
+      const dataFileContent = fs.readFileSync(dataFilePath, "utf8").trim();
+      const dataBaseFileContent = fs.readFileSync(dataBaseFilePath, "utf8").trim();
+
+      const dataFileSplit = dataFileContent.split("\n").filter(Boolean);
+      const dataBaseFileSplit = dataBaseFileContent.split("\n").filter(Boolean);
+
+      // console.log("Data file split: " + dataFileSplit);
+      // console.log("Data base file split: " + dataBaseFileSplit);
+
+      if (!dataFileSplit.length || !dataBaseFileSplit.length) {
+        return res.status(400).json({ message: "CSV files cannot be empty" });
+      }
+
+      // Extract headers + first row
+      const dataFileHeaders = dataFileSplit[0].split(",").map((h) => h.trim());
+      const dataBaseFileHeaders = dataBaseFileSplit[0].split(",").map((h) => h.trim());
+
+      console.log("Data file headers: " + dataFileHeaders);
+      console.log("Data base file headers: " + dataBaseFileHeaders);
+
+      const dataFileRow = dataFileSplit[1]?.split(",") || [];
+      const dataBaseFileRow = dataBaseFileSplit[1]?.split(",") || [];
+
+      // // Ensure chosen columns exist in headers
+      // if (!dataFileHeaders.includes(dataFileColumn)) {
+      //   return res.status(400).json({
+      //     message: `Column "${dataFileColumn}" not found in dataFile headers`,
+      //     availableHeaders: dataFileHeaders,
+      //   });
+      // }
+      // if (!dataBaseFileHeaders.includes(dataBaseFileColumn)) {
+      //   return res.status(400).json({
+      //     message: `Column "${dataBaseFileColumn}" not found in dataBaseFile headers`,
+      //     availableHeaders: dataBaseFileHeaders,
+      //   });
+      // }
+
+      // Find mismatched columns
+      const potentialToMatch = dataFileHeaders.filter(
+        (col) => !dataFileRow.includes(col)
+      );
+      const potentialToMatch2 = dataBaseFileHeaders.filter(
+        (col) => !dataBaseFileRow.includes(col)
+      );
+
+      // Success response
+      return res.status(200).json({
+        message: "Files processed successfully",
+        data: {
+          dataFileHeaders,
+          dataBaseFileHeaders,
+          potentialToMatch,
+          potentialToMatch2,
         }
       });
+    } catch (error) {
+      console.error("Error processing files:", error);
+      res.status(500).json({
+        message: "Error processing files",
+        error: error.message,
+      });
     }
-
-    //console.log(JSON.stringify(req.body));
-    const dataFileContent = fs.readFileSync(dataFilePath, 'utf8');
-    const dataBaseFileContent = fs.readFileSync(dataBaseFilePath, 'utf8');
-
-    const dataFileSplit = dataFileContent.split('\n');
-    const dataBaseFileSplit = dataBaseFileContent.split('\n');
-
-    const dataDocuments = [dataFileSplit[0], dataFileSplit[1]];
-    const dataBaseDocuments = [dataBaseFileSplit[0], dataBaseFileSplit[1]];
-
-    // // Convert to string for Gemini
-    // const contentData = JSON.stringify(dataFileData.data, null, 2);
-    // const contentDataBase = JSON.stringify(dataBaseFileData.data, null, 2);
-    
-    //Determining if the files are valid
-    if(dataDocuments[0] === undefined || dataBaseDocuments[0] === undefined) {
-      return res.status(400).json({ message: 'Invalid CSV files provided' });
-    }
-    //checking if the columns exist in the files
-    if(!dataDocuments[0].includes(dataFileColumn) || !dataBaseDocuments[0].includes(dataBaseFileColumn)) {
-      return res.status(400).json({message: 'Specified columns not found in the provided CSV files. Please ensure the columns exist and is exactly spelled as you provided.'});
-    }
-    console.log("Checking if columns exist");
-    //extracting the columns from the files
-    dataFileColumnArr = dataDocuments[0].split(',');
-    dataBaseFileColumnArr = dataBaseDocuments[0].split(',');
-
-    if(dataDocuments[1] === undefined) {
-      return res.status(400).json({message: 'No data found in the provided CSV files. Please ensure the files are not empty.'});
-    }
-
-    const columnsToMatch = dataDocuments[1].split(',');
-    const diffBetweenColumns = dataFileColumnArr.length - columnsToMatch.length;
-    if(diffBetweenColumns <= 0) {
-      return res.status(400).json({message: 'No columns to match found in the provided CSV files. Please ensure the files are not empty.'});
-    }
-    const potentialToMatch = [];
-    for(let i = dataFileColumnArr.length - 1; i < diffBetweenColumns; i++) {
-      potentialToMatch.push(dataFileColumnArr[i]);
-    }
-
-    
-    const columnsToMatch2 = dataBaseDocuments[1].split(',');
-    const diffBetweenColumns2 = dataBaseFileColumnArr.length - columnsToMatch2.length;
-    if(diffBetweenColumns2 <= 0) {
-      return res.status(400).json({message: 'No columns to match found in the provided CSV files. Please ensure the files are not empty.'});
-    }
-    const potentialToMatch2 = [];
-    for(let i = dataBaseFileColumnArr.length - 1; i < diffBetweenColumns2; i++) {
-      potentialToMatch2.push(dataBaseFileColumnArr[i]);
-    }
-
-    return res.status(200).json({
-      message: 'Files processed successfully',
-      data: {
-        dataFileColumnArr,
-        dataBaseFileColumnArr,
-        potentialToMatch,
-        potentialToMatch2,
-      }
-    });
-  } catch (error) {
-    console.error('Error processing files:', error);
-    res.status(500).json({
-      message: 'Error processing files',
-      error: error.message
-    });
   }
-});
+);
 
 app.get('/extractData', async (req, res) => {
   message = [

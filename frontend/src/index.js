@@ -5,8 +5,9 @@ import LoadingPage from './pages/loadingPage.jsx';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { FilesProvider } from './Components/filesContext.js';
-import {ColumnInfoProvider} from './Components/columnInfoContext.js';
+import { FilesProvider } from './Contexts/filesContext.js';
+import {ColumnInfoProvider} from './Contexts/columnInfoContext.js';
+import CollectDetails from './pages/collectDetails.jsx'
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
@@ -16,6 +17,7 @@ root.render(
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/loading" element={<LoadingPage />} />
+            <Route path="/collectDetails" element={<CollectDetails/>} />
           </Routes>
         </BrowserRouter>
       </ColumnInfoProvider>
