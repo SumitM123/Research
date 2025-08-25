@@ -1,32 +1,70 @@
-import React from 'react';
-import { useFilesInfo } from '../Contexts/filesContext';
-
+import React from "react";
+import { useColumnInfo } from "../Contexts/columnInfoContext";
+import "../pages/collectDetails.css"
 
 const CollectDetails = () => {
-    //scan the files and check for the respective column details
-    //check what needs to be done based on the second line of the file
-        //If the second line is empty, then we need to ask the user for the column details
-        const fileInfo = useFilesInfo();
+  const {
+    dataFileAvailableTopics,
+    dataBaseFileAvailableTopics,
+  } = useColumnInfo();
 
-        return (
-        //File object
-        
-        <div className="collect-details-container">
-            <form>
-                <select required>
-                    {(fileInfo.dataFileAvailableTopics || []).map((dataFileTopics) => (
-                        <option value={dataFileTopics}>
-                        {dataFileTopics}
-                        </option>
-                    ))}
-                </select>
+  return (
+    <div className="collect-details-page">
+      <div className="collect-details-card">
+        <h1 className="collect-details-title">
+          Match Columns Between Files
+        </h1>
 
-                <input type="text" placeholder="Enter first value" />
-                <input type="text" placeholder="Enter second value" />
-                <input type="text" placeholder="Enter third value" />
-                <input type="text" placeholder="Enter fourth value" />
-            </form>
-        </div>
-    );
-}
+        <form className="collect-details-form">
+          {/* Data Collection File */}
+          <div>
+            <label className="collect-details-label">
+              Select a column from your <span style={{ color: "#2563eb" }}>Data Collection File</span>:
+            </label>
+            <select required className="collect-details-select">
+              {(dataFileAvailableTopics || []).map((topic, idx) => (
+                <option key={idx} value={topic}>
+                  {topic}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Database File */}
+          <div>
+            <label className="collect-details-label">
+              Select a column from your <span style={{ color: "#16a34a" }}>Database File</span>:
+            </label>
+            <select required className="collect-details-select">
+              {(dataBaseFileAvailableTopics || []).map((topic, idx) => (
+                <option key={idx} value={topic}>
+                  {topic}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Manual Entry Section */}
+          <div>
+            <h2 className="collect-details-subtitle">Enter Sample Values</h2>
+            <div className="collect-details-grid">
+              <input type="text" placeholder="Enter first value" className="collect-details-input" />
+              <input type="text" placeholder="Enter second value" className="collect-details-input" />
+              <input type="text" placeholder="Enter third value" className="collect-details-input" />
+              <input type="text" placeholder="Enter fourth value" className="collect-details-input" />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div style={{ textAlign: "center" }}>
+            <button type="submit" className="collect-details-button">
+              Continue
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default CollectDetails;

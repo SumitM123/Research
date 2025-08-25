@@ -12,11 +12,10 @@ export const useFilesInfo = () => {
 export const FilesProvider = ({ children }) => {
   const [databaseFile, setDatabaseFile] = useState(null);
   const [dataFile, setDataFile] = useState(null);
-  // const [dataFileColumn, setDataFileColumn] = useState(null);
-  // const [dataBaseFileColumn, setDataBaseFileColumn] = useState(null);
-  // const [description, setDescription] = useState("");
+  const [topic, setTopic] = useState("");
+
   return (
-    <filesInfo.Provider value={{ databaseFile, setDatabaseFile, dataFile, setDataFile}}>
+    <filesInfo.Provider value={{ databaseFile, setDatabaseFile, dataFile, setDataFile, topic, setTopic}}>
       {children}
     </filesInfo.Provider>
   );

@@ -6,9 +6,11 @@ import { useFilesInfo } from './Contexts/filesContext.js';
 import { useColumnInfo } from './Contexts/columnInfoContext.js'
 function App() {
   // This is the custom for the context
+  //for fileInfo, you only have the data file and the dataBaseFile
   const fileInfo = useFilesInfo();
+  //for columnInfo, you have topic, dataFileColumn, dataBaseFileColumn, dataFileAva
   const columnInfo = useColumnInfo();
-  const { databaseFile, setDatabaseFile, dataFile, setDataFile, dataFileColumn, setDataFileColumn, dataBaseFileColumn, setDataBaseFileColumn, description, setDescription} = fileInfo;
+  const { databaseFile, setDatabaseFile, dataFile, setDataFile, topic, setTopic} = fileInfo;
 
   const navigate = useNavigate(); 
 
@@ -40,26 +42,28 @@ function App() {
       return;
     }
 
-    if(dataFileColumn === "" || dataBaseFileColumn === "" || description === "") {
-      alert("Please fill in all the fields.");
+    if(topic === "") {
+      alert("Please fill in the topic field It's necessary");
       return;
     }
     const formData = new FormData();
     formData.append('dataFile', dataFile);
     formData.append('dataBaseFile', databaseFile);
-    formData.append('dataFileColumn', dataFileColumn);
-    formData.append('dataBaseFileColumn', dataBaseFileColumn);
-    formData.append('description', description);
-
+    formData.append('topic', topic);
+    // formData.append('dataFileColumn', dataFileColumn);
+    // formData.append('dataBaseFileColumn', dataBaseFileColumn);
+    // formData.append('description', description);
+    formData.append('topic', topic);
     try {
       const response = await axios.post("/processFiles", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-
-      fileInfo.setDataFileAvailableTopics(response.data.dataFileHeaders);
-      fileInfo.setDataBaseFileAvailableTopics(response.data.dataBaseFileHeaders);
+      //it's an array consisting of the topics that the user can selecct
+      
+      columnInfo.setDataFileAvailableTopics(response.data.payload.dataFileHeaders);
+      columnInfo.setDataBaseFileAvailableTopics(response.data.payload.dataBaseFileHeaders);
       
       console.log(JSON.stringify(response.data));
 
@@ -71,7 +75,7 @@ function App() {
       return;
     }
 
-    navigate('/loading');
+    navigate('/collectDetails');
   };
 
   return (
@@ -104,33 +108,11 @@ function App() {
         </div>
         <div className="form-group">
           <label className="label">
-            Data File Column to Match:
+            Topic:
             <input
               className="file-input"
               type="text"
-              onChange={(e) => setDataFileColumn(e.target.value)}
-              name="dataFileColumn"
-            />
-          </label>
-        </div>
-        <div className="form-group">
-          <label className="label">
-            Database File Column to Match:
-            <input
-              className="file-input"
-              type="text"
-              onChange={(e) => setDataBaseFileColumn(e.target.value)}
-              name="dataBaseFileColumn"
-            />
-          </label>
-        </div>
-        <div className="form-group">
-          <label className="label">
-            Description:
-            <input
-              className="file-input"
-              type="text"
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setTopic(e.target.value)}
               name="description"
             />
           </label>

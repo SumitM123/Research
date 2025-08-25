@@ -12,8 +12,6 @@ export const useColumnInfo = () => {
 }
 
 export const ColumnInfoProvider = ({ children }) => {
-    // the subject of the matter
-    const [topic, setTopic] = useState("");
     //setting the initial match
     const [dataFileColumn, setDataFileColumn] = useState("")
     const [dataBaseFileColumn, setDataBaseFileColumn] = useState("");
@@ -23,7 +21,7 @@ export const ColumnInfoProvider = ({ children }) => {
     //each column from the dataFile to the dataBaseFile
     const [matches, setMatches] = useState([{}]);
     return (
-        <columnInfo.Provider value={{ topic, setTopic, dataFileColumn, setDataFileColumn, dataBaseFileColumn, setDataBaseFileColumn, 
+        <columnInfo.Provider value={{ dataFileColumn, setDataFileColumn, dataBaseFileColumn, setDataBaseFileColumn, 
         dataFileAvailableTopics, setDataFileAvailableTopics, dataBaseFileAvailableTopics, setDataBaseFileAvailableTopics, 
         matches, setMatches }}>
             {children}

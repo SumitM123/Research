@@ -1,0 +1,114 @@
+/* Global background */
+.collect-details-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+}
+
+/* Card container */
+.collect-details-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  max-width: 800px;
+  width: 100%;
+  padding: 2rem;
+}
+
+/* Heading */
+.collect-details-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+/* Form */
+.collect-details-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Labels */
+.collect-details-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+/* Select dropdowns */
+.collect-details-select {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.collect-details-select:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* Manual input section */
+.collect-details-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+.collect-details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .collect-details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Input fields */
+.collect-details-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.collect-details-input:focus {
+  border-color: #4f46e5;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+/* Button */
+.collect-details-button {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out, transform 0.1s ease-in-out;
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+}
+
+.collect-details-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}

@@ -89,10 +89,10 @@ app.post(
       const dataFilePath = req.files.dataFile[0].path;
       const dataBaseFilePath = req.files.dataBaseFile[0].path;
 
-      const { dataFileColumn, dataBaseFileColumn, description } = req.body;
+      const { topic } = req.body;
 
       // Validate required fields
-      if (!dataFileColumn || !dataBaseFileColumn || !description) {
+      if (!topic || topic === "") {
         return res.status(400).json({
           message: "Missing required fields",
           received: { dataFileColumn, dataBaseFileColumn, description },
@@ -102,7 +102,7 @@ app.post(
       // Read file contents
       const dataFileContent = fs.readFileSync(dataFilePath, "utf8").trim();
       const dataBaseFileContent = fs.readFileSync(dataBaseFilePath, "utf8").trim();
-
+      //spliting the data from each line
       const dataFileSplit = dataFileContent.split("\n").filter(Boolean);
       const dataBaseFileSplit = dataBaseFileContent.split("\n").filter(Boolean);
 
@@ -137,18 +137,34 @@ app.post(
       //   });
       // }
 
-      // Find mismatched columns
-      const potentialToMatch = dataFileHeaders.filter(
-        (col) => !dataFileRow.includes(col)
-      );
-      const potentialToMatch2 = dataBaseFileHeaders.filter(
-        (col) => !dataBaseFileRow.includes(col)
-      );
+      // Find columns that need data to be extract
+      // const potentialToMatch = dataFileHeaders.filter(
+      //   (col) => 
+      // );
+      // const potentialToMatch2 = dataBaseFileHeaders.filter(
+      //   (col) => !dataBaseFileRow.includes(col)
+      // );
 
+      let potentialToMatch = [];
+      for(let i = 0; i < dataFileHeaders.length; i++) {
+        if(i >= dataFileRow.length) {
+          potentialToMatch.push(dataFileHeaders[i]);
+        }
+      }
+      let potentialToMatch2 = [];
+      for(let i = 0; i < dataBaseFileHeaders.length; i++) {
+        if(i >= dataBaseFileRow.length) {
+          potentialToMatch2.push(dataBaseFileHeaders[i]);
+        }
+      }
+      console.log("Data file headers:" + dataFileHeaders);
+      console.log("Database file headers: " + dataBaseFileHeaders);
+      console.log("Data file potential:" + potentialToMatch);
+      console.log("Database file potential: " + potentialToMatch2);
       // Success response
       return res.status(200).json({
         message: "Files processed successfully",
-        data: {
+        payload: {
           dataFileHeaders,
           dataBaseFileHeaders,
           potentialToMatch,
