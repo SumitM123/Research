@@ -44,7 +44,7 @@ const CollectDetails = () => {
             </select>
           </div>
 
-          {/* Manual Entry Section */}
+          {/* ADD LOGIC SO THAT THIS ONLY POPS UP WITH THE RIGHT UPDATED COLUMNS AND IF THE PAST TWO FIELDS HAVE BEEN INPUTTED*/}
           <div>
             <h2 className="collect-details-subtitle">Enter Sample Values</h2>
             <div className="collect-details-grid">
