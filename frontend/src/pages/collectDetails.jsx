@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef} from "react";
 import { useColumnInfo } from "../Contexts/columnInfoContext";
 import "../pages/collectDetails.css"
 
@@ -7,7 +7,19 @@ const CollectDetails = () => {
     dataFileAvailableTopics,
     dataBaseFileAvailableTopics,
   } = useColumnInfo();
+  let lightUpNextButton = false;
+  const dataFileRef = useRef(null);
+  const dataBaseRef = useRef(null);
 
+  const goToSecondHalf = () => {
+
+  }
+  useEffect( () => {
+    if(dataFileRef.current.value !== "" && dataBaseRef.current.value !== "") {
+      lightUpNextButton = true;
+    }
+
+  }, [dataFileRef, dataBaseRef]);
   return (
     <div className="collect-details-page">
       <div className="collect-details-card">
@@ -16,12 +28,14 @@ const CollectDetails = () => {
         </h1>
 
         <form className="collect-details-form">
-          {/* Data Collection File */}
           <div>
             <label className="collect-details-label">
               Select a column from your <span style={{ color: "#2563eb" }}>Data Collection File</span>:
             </label>
-            <select required className="collect-details-select">
+            <select required className="collect-details-select" defaultValue="" ref={dataFileRef}>
+              <option value="" disabled>
+                -- Select a column --
+              </option>
               {(dataFileAvailableTopics || []).map((topic, idx) => (
                 <option key={idx} value={topic}>
                   {topic}
@@ -35,7 +49,10 @@ const CollectDetails = () => {
             <label className="collect-details-label">
               Select a column from your <span style={{ color: "#16a34a" }}>Database File</span>:
             </label>
-            <select required className="collect-details-select">
+            <select required className="collect-details-select" defaultValue="" ref={dataBaseRef}>
+              <option value="" disabled>
+                -- Select a column --
+              </option>
               {(dataBaseFileAvailableTopics || []).map((topic, idx) => (
                 <option key={idx} value={topic}>
                   {topic}
@@ -43,7 +60,9 @@ const CollectDetails = () => {
               ))}
             </select>
           </div>
-
+          <button onClick={goToSecondHalf} disabled={!lightUpNextButton}>
+            Next
+          </button>
           {/* ADD LOGIC SO THAT THIS ONLY POPS UP WITH THE RIGHT UPDATED COLUMNS AND IF THE PAST TWO FIELDS HAVE BEEN INPUTTED*/}
           <div>
             <h2 className="collect-details-subtitle">Enter Sample Values</h2>
@@ -54,7 +73,9 @@ const CollectDetails = () => {
               <input type="text" placeholder="Enter fourth value" className="collect-details-input" />
             </div>
           </div>
-
+          <div>
+            <button > Next </button>
+          </div>
           {/* Submit Button */}
           <div style={{ textAlign: "center" }}>
             <button type="submit" className="collect-details-button">
