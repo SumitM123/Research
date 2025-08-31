@@ -145,10 +145,10 @@ app.post(
       //   (col) => !dataBaseFileRow.includes(col)
       // );
 
-      let potentialToMatch = [];
+      let potentialToMatch = new Set();
       for(let i = 0; i < dataFileHeaders.length; i++) {
         if(i >= dataFileRow.length) {
-          potentialToMatch.push(dataFileHeaders[i]);
+          potentialToMatch.add(dataFileHeaders[i]);
         }
       }
       let potentialToMatch2 = [];
@@ -159,7 +159,11 @@ app.post(
       }
       console.log("Data file headers:" + dataFileHeaders);
       console.log("Database file headers: " + dataBaseFileHeaders);
-      console.log("Data file potential:" + potentialToMatch);
+      let strPotentialToMatch = "";
+      for(const item of potentialToMatch) {
+        strPotentialToMatch += item + ", ";
+      }
+      console.log("Data file potential:" + strPotentialToMatch);
       console.log("Database file potential: " + potentialToMatch2);
       // Success response
       return res.status(200).json({
