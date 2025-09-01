@@ -1,7 +1,7 @@
 import React, { useEffect, useRef} from "react";
-import { useColumnInfo } from "../Contexts/columnInfoContext";
+import { useColumnInfo } from "../Contexts/columnInfoContext.js";
 import "../pages/collectDetails.css"
-const ColumnCollection = require("../Components/columnCollection.jsx");
+const ColumnCollection = require("../Components/ColumnCollection.jsx");
 const CollectDetails = () => {
   //Can only use hooks at the top most level of the functional component. Cannot use hooks inside of a inner function
   const {
@@ -9,8 +9,10 @@ const CollectDetails = () => {
     dataBaseFileAvailableTopics,  //data base file headers
     potentialToMatch
   } = useColumnInfo();
+
   let lightUpNextButton = false;
   let inFirstHalf = true;
+  //first half page tag references
   const dataFileRef = useRef();
   const dataBaseRef = useRef();
   //key is the data collection file column name, and the value is the data base file column
@@ -42,9 +44,21 @@ const CollectDetails = () => {
     }
     return updatedArr;
   }
+  const goBackToFirstHalf = () => {
+    //if going back to first half, then you have to restart the entire column matches setting lol
+    
+    //remove the previous column matches
+    columnMatches.clear();
+    
+    inFirstHalf = true;
+
+  }
   const goToSecondHalf = () => {
     inFirstHalf = false;
     lightUpNextButton = true;
+    columnMatches.set(dataFileRef.current.value, dataBaseRef.current.value); //Do this line and the next line once the first half is submitted
+    dataCollectionHeadersSelected.push(dataFileRef.current.value);
+    dataBaseHeadersSelected.push(dataBaseRef.current.value);
   }
   const buttonValForFirstHalf = () => {
     if(inFirstHalf) {
@@ -53,44 +67,16 @@ const CollectDetails = () => {
       return "Back";
     }
   }
-  const potentialToMatchSelectOptions = () => {
-    const dataCollectionHeaders = getUpdatedDataCollectionArr();
-    const matchRef = useRef();
-    const elementsToReturn = "";
-    if(dataCollectionHeaders.length <= 0) {
-      elementsToReturn = ["Done"];
-      return elementsToReturn;
-    } else {
-      elementsToReturn = ["Continue", 
-        <select ref={matchRef} defaultValue="">
-          <option value="" disabled>
-            -- Select a column from your database collection to match with your data collection file--
-          </option>
-          {(dataFileAvailableTopics || []).map((topic, idx) => (
-            <option key={idx} value={topic}>
-              {topic}
-            </option>
-          ))}
-        </select>
-      , 
-        dataBaseHeadersSelected.has(matchRef.current.value) ? 'Warning: this column has already been selected for another data collection column', '';
-      ];
-    }
-    if(matchref)
-  }
   useEffect( () => {
     if(dataFileRef.current.value !== "" && dataBaseRef.current.value !== "" && inFirstHalf) {
       lightUpNextButton = true;
-      columnMatches.set(dataFileRef.current.value, dataBaseRef.current.value); //Do this line and the next line once the first half is submitted
-      dataCollectionHeadersSelected.push(dataFileRef.current.value);
-      dataBaseHeadersSelected.push(dataBaseRef.current.value);
     }
-
   }, [dataFileRef, dataBaseRef]);
-  const updatedDataCollectionRef = useRef();
-  useEffect( () => {
-    dataBaseHeadersSelected.push(updatedDataCollectionRef.current.value); //Do this line and the next line once in the second half of the page, and the user clicked on continue
-  }, [updatedDataCollectionRef])
+
+  // const updatedDataCollectionRef = useRef();
+  // useEffect( () => {
+  //   dataBaseHeadersSelected.push(updatedDataCollectionRef.current.value); //Do this line and the next line once in the second half of the page, and the user clicked on continue
+  // }, [updatedDataCollectionRef])
   return (
     <div className="collect-details-page">
       <div className="collect-details-card">
@@ -100,6 +86,7 @@ const CollectDetails = () => {
 
         <form className="collect-details-form">
           <div className="firstHalfWrapper">
+            {/* Data Collection File */}
             <div>
               <label className="collect-details-label">
                 Select a column from your <span style={{ color: "#2563eb" }}>Data Collection File</span>:
@@ -139,9 +126,7 @@ const CollectDetails = () => {
           <div>
             <h2 className="collect-details-subtitle">Enter Sample Values</h2>
             <div className="collect-details-grid">
-              <select required defaultValue="" disabled={inFirstHalf}>
-                <ColumnCollection columnsToMatch={potentialToMatch} headers={dataBaseFileAvailableTopics}></ColumnCollection>
-              </select>
+              <ColumnCollection columnsToMatch={potentialToMatch} headers={dataBaseFileAvailableTopics} disabled={inFirstHalf}></ColumnCollection>
             </div>
           </div>
           {/* Submit Button */}

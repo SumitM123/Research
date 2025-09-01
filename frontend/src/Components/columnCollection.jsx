@@ -1,7 +1,11 @@
-function columnCollection(props) {
+import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+function ColumnCollection(props) {
     const potentialToMatch = props.columnsToMatch;
     const dataBaseHeaders = props.headers;
+    const inFirstHalf = props.disabled;
     
+    const navigate = useNavigate();
     const usedDataBaseHeaders = new Set();
     const indexToDataBaseHeaders = new Map();
     const selectRef = useRef();
@@ -36,16 +40,16 @@ function columnCollection(props) {
         backDisabled = checkBackDisabled(arrIndex);
         selectOptions(arrIndex);
     }
-    handleBackClick = (e) => {
+    const handleBackClick = (e) => {
         arrIndex--;
         const valToRemove = indexToDataBaseHeaders.remove(arrIndex);
         usedDataBaseHeaders.remove(valToRemove);
         backDisabled = checkBackDisabled(arrIndex);
         selectOptions(arrIndex);
     }
-    handleSelect = (e) => {
+    const handleSelect = (e) => {
         //e.target references the specific dom element that triggered the event listener
-        if(usedDataBaseHeaders.has(e.target.current)) {
+        if(usedDataBaseHeaders.has(e.target.value)) {
             setWarning("Warning: this data base header has already been assigned to a different column");
         }
         setWarning("");
@@ -53,7 +57,7 @@ function columnCollection(props) {
     function selectOptions(index) {
         const currentMatch = potentialToMatch[index];
         return (
-            <select onChange={handleSelect}>
+            <select onChange={handleSelect} disabled={inFirstHalf}>
                 Please select a column from the data base file to match with {currentMatch}
                 <option value="" disabled>
             -- Select a column from your database collection to match with your data collection file--
@@ -84,4 +88,4 @@ function columnCollection(props) {
         </div>
     )
 }
-export default columnCollection;
+export default ColumnCollection;
