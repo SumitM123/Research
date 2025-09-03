@@ -7,7 +7,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { FilesProvider } from './Contexts/filesContext.js';
 import {ColumnInfoProvider} from './Contexts/columnInfoContext.js';
-import CollectDetails from './pages/CollectDetails.jsx'
+import CollectDetails from './pages/collectDetails.jsx'
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

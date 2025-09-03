@@ -1,0 +1,97 @@
+[33mcommit c67510567fac04ede6d81816f390d5dc5e37a99a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: SMantri05 <sumith.mantri@gmail.com>
+Date:   Mon Sep 1 12:59:55 2025 -0700
+
+    Before debugging
+
+[33mcommit e3722fb0a9398db45d2432eac25354a0134242c3[m
+Author: SMantri05 <sumith.mantri@gmail.com>
+Date:   Sat Aug 30 18:05:14 2025 -0700
+
+    Added columnCollection
+    
+    Work on debugging next
+
+[33mcommit a1113532dd1f2735ac300b20251bab9aeaa552a7[m
+Author: SMantri05 <sumith.mantri@gmail.com>
+Date:   Tue Aug 26 18:29:57 2025 -0700
+
+    Added references for selects
+
+[33mcommit 6de6117421ce50b047084569be513ca1d12c2924[m
+Author: SMantri05 <sumith.mantri@gmail.com>
+Date:   Mon Aug 25 15:52:58 2025 -0700
+
+    Added a list of work to do later
+
+[33mcommit a69a840216810f09feae77b81c276c5217510988[m
+Author: SMantri05 <sumith.mantri@gmail.com>
+Date:   Mon Aug 25 15:48:40 2025 -0700
+
+    Added the collect Details page and style
+
+[33mcommit ef493f316b150b108c8ff18ddfcb19b9044e4088[m
+Author: SMantri05 <sumith.mantri@gmail.com>
+Date:   Sat Aug 23 22:19:26 2025 -0700
+
+    Debug the issues, and made a collect details page
+
+[33mcommit e825a3965a69ae6ee2ddf7db9425881b3fc2d5df[m
+Author: SMantri05 <sumith.mantri@gmail.com>
+Date:   Sat Aug 23 15:39:26 2025 -0700
+
+    Debugging processFiles route
+
+[33mcommit 952365d20ae25e567aa30812f96798636181b9f8[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Fri Aug 22 16:03:14 2025 -0700
+
+    File upload changes
+
+[33mcommit f7162dfc0d54b0fe2d49fc1135ced8941e2e1df7[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Wed Aug 20 15:48:26 2025 -0700
+
+    File qualification check
+
+[33mcommit 52b4af4cdae5501602fb43929354b982b3ac728a[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Sun Aug 17 15:04:57 2025 -0700
+
+    Editted the prompt and converted the Document objects into string to input into chat model
+
+[33mcommit 893ee1cb3cf7f398ce81a92dabd8f744436482ef[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Fri Aug 15 14:18:36 2025 -0700
+
+    Deleted route, and added to server. Then utilized formData.
+
+[33mcommit 3ebe0b96565f27a98b06436670b441f49fe451c3[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Thu Aug 14 14:23:16 2025 -0700
+
+    Minor change in sending request
+
+[33mcommit 2b9993663c96f8b9075faae731d96f12e7e893c5[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Wed Aug 13 12:28:22 2025 -0700
+
+    Added the request to api
+
+[33mcommit 4e3e8d17f9985abe7348eae4867bfdb8bab9c598[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Wed Aug 13 12:18:45 2025 -0700
+
+    Created context
+
+[33mcommit 156e10d0e751451c23e87a606f8d89a57c5c29f6[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Wed Aug 13 12:02:26 2025 -0700
+
+    Added code to only allow .csv files
+
+[33mcommit 21d22c1afce716e3edb45960dd8ee9cc6425a7dd[m
+Author: SMantri05 <sumit@instaservice.com>
+Date:   Wed Aug 13 02:17:55 2025 -0700
+
+    Initial commit with frontend working. Backend is connected to frontend

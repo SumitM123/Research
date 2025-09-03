@@ -1,7 +1,7 @@
 import React, { useEffect, useRef} from "react";
 import { useColumnInfo } from "../Contexts/columnInfoContext.js";
-import "../pages/collectDetails.css"
-const ColumnCollection = require("../Components/ColumnCollection.jsx");
+import "./collectDetails.css"
+const ColumnCollection = require("../Components/columnCollection.jsx");
 const CollectDetails = () => {
   //Can only use hooks at the top most level of the functional component. Cannot use hooks inside of a inner function
   const {
