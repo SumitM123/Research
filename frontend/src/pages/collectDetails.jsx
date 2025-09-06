@@ -16,11 +16,11 @@ const CollectDetails = () => {
   const [dataFileRef, setDataFileRef] = useState("");
   const [dataBaseRef, setDataBaseRef] = useState("");
   //key is the data collection file column name, and the value is the data base file column
-  const columnMatches = new Map();
+  const columnMatches = useState(new Map());
   //the already selected data base headers
-  const dataBaseHeadersSelected = new Set();
+  const dataBaseHeadersSelected = useState(new Set());
   //the already selected data collection headers
-  const dataCollectionHeadersSelected = new Set();
+  const dataCollectionHeadersSelected = useState(new Set());
   const getUpdatedDataCollectionArr = () => {
     //get the updated array
                 //key is the data collection file column name, and the value is the data base file column
