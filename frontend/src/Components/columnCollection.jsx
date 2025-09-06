@@ -8,6 +8,7 @@ function ColumnCollection(props) {
     const navigate = useNavigate();
     const usedDataBaseHeaders = new Set();
     const indexToDataBaseHeaders = new Map();
+    const dataFileToDataBaseHeader = new Map();
     const selectRef = useRef();
     const arrIndex = 0;
 
@@ -33,6 +34,7 @@ function ColumnCollection(props) {
         }
         usedDataBaseHeaders.add(selectRef.current.value);
         indexToDataBaseHeaders.set(arrIndex, selectRef.current.value);
+        dataFileToDataBaseHeader.set(potentialToMatch[arrIndex], selectRef.current.value);
         arrIndex++;
         if(arrIndex >= (potentialToMatch.length - 1)) {
             valueOfNext = "Done";
@@ -67,7 +69,7 @@ function ColumnCollection(props) {
                     {topic}
                     </option>
                 ))}
-                <p style="color: red">
+                <p style={{ color: "red" }}>
                     {warning}
                 </p>
             </select>
@@ -76,9 +78,7 @@ function ColumnCollection(props) {
     }
     return (
         <div>
-            <select>
-                {selectOptions(arrIndex)};
-            </select>
+            {selectOptions(arrIndex)};
             <button onClickdisabled={backDisabled}>
                 Back
             </button>
