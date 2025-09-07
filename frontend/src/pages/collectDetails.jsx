@@ -57,12 +57,6 @@ const CollectDetails = () => {
       return "Back";
     }
   }
-  const goToOutputPage = () => {
-    navigate('/outputPage');
-  }
-  const checkSubmitDisabled = () => {
-    //submit button should be enabled when all data collection file columns have been matched
-  }
   return (
     <div className="collect-details-page">
       <div className="collect-details-card">
@@ -137,12 +131,6 @@ const CollectDetails = () => {
                 topicMatch={initialMatch}
                 key={resetKey}
               />            
-            </div>
-            {/* Submit Button */}
-            <div style={{ textAlign: "center" }}>
-              <button type="button" disabled={checkSubmitDisabled} className="collect-details-button" onClick={goToOutputPage()}>
-                Submit
-              </button>
             </div>
           </div>
         </form>

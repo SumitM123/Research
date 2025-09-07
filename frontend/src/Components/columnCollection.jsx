@@ -24,7 +24,7 @@ function ColumnCollection(props) {
     const [continueDisabled, setContinueDisabled] = useState(false);
     const [backDisabled, setBackDisabled] = useState(true);
     const [submitDisabled, setSubmitDisabled] = useState(true);
-    const [valueOfNext, setValueOfNext] = useState(arrIndex < potentialToMatch.length - 1 ? "Continue" : "Done" );
+    const [valueOfNext, setValueOfNext] = useState("Continue");
     const [warning, setWarning] = useState("");
     
     //will return true if back button should be disabled, and false otherwise
@@ -102,22 +102,33 @@ function ColumnCollection(props) {
         setWarning("");
     }
     function selectOptions(index) {
-        const currentMatch = potentialToMatch[index];
         const selected = indexToDataBaseHeaders.get(index) || "";
         return (
-            <select defaultValue="" onChange={handleSelect} disabled={inFirstHalf} ref={selectRef} required>
-                <option value="" disabled>
-                    -- Select a column from your database collection to match with your data collection file--
-                </option>
-                {(dataBaseHeaders || []).map((topic, idx) => (
-                    <option key={idx} value={topic}>
-                        {topic}
+            <div className="collect-details-card" style={{ padding: '1.5rem', marginBottom: '1rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                <select
+                    className="collect-details-select"
+                    defaultValue=""
+                    onChange={handleSelect}
+                    disabled={inFirstHalf}
+                    ref={selectRef}
+                    required
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem', marginBottom: '0.5rem' }}
+                >
+                    <option value="" disabled>
+                        -- Select a column from your database collection to match with your data collection file--
                     </option>
-                ))}
-                <p style={{ color: "red" }}>
-                    {warning}
-                </p>
-            </select>
+                    {(dataBaseHeaders || []).map((topic, idx) => (
+                        <option key={idx} value={topic}>
+                            {topic}
+                        </option>
+                    ))}
+                </select>
+                {warning && (
+                    <div className="collect-details-warning" style={{ color: 'red', fontSize: '0.95rem', marginTop: '0.25rem' }}>
+                        {warning}
+                    </div>
+                )}
+            </div>
         );
     }
     const handleSubmit = (e) => {
@@ -127,24 +138,93 @@ function ColumnCollection(props) {
         navigate('/outputPage');
     }
 
+    const currentMatch = potentialToMatch[arrIndex];
     return (
-        <>
-            <div key={key}>
-                <label>
-                    Select the database header to match with the {currentMatch} column:
+        <div
+            key={key}
+            className="collect-details-wrapper"
+            style={{
+                maxWidth: '480px',
+                margin: '3rem auto',
+                background: '#f7f7f7',
+                borderRadius: '16px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                padding: '2.5rem 1.5rem 2rem 1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+        >
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <label className="collect-details-label" style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '1.25rem', display: 'block', textAlign: 'center' }}>
+                    Select the database header to match with the <span style={{ color: '#1976d2' }}>{currentMatch}</span> column:
                 </label>
                 {selectOptions(arrIndex)}
-                <button onClick={handleBackClick} disabled={backDisabled}>
+            </div>
+            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '2rem', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                <button
+                    className="collect-details-btn"
+                    onClick={handleBackClick}
+                    disabled={backDisabled}
+                    style={{
+                        background: backDisabled ? '#e0e0e0' : '#fff',
+                        color: backDisabled ? '#aaa' : '#1976d2',
+                        border: '1px solid #1976d2',
+                        borderRadius: '6px',
+                        padding: '0.5rem 1.5rem',
+                        fontWeight: 'bold',
+                        cursor: backDisabled ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                        minWidth: '100px',
+                    }}
+                >
                     Back
                 </button>
-                <button onClick={handleContinueClick} disabled={continueDisabled}>
-                    Continue
+                <button
+                    className="collect-details-btn"
+                    onClick={handleContinueClick}
+                    disabled={continueDisabled}
+                    style={{
+                        background: continueDisabled ? '#e0e0e0' : '#1976d2',
+                        color: continueDisabled ? '#aaa' : '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.5rem 1.5rem',
+                        fontWeight: 'bold',
+                        cursor: continueDisabled ? 'not-allowed' : 'pointer',
+                        boxShadow: continueDisabled ? 'none' : '0 2px 8px rgba(25,118,210,0.08)',
+                        transition: 'all 0.2s',
+                        minWidth: '100px',
+                    }}
+                >
+                    {valueOfNext}
                 </button>
             </div>
-            <button onClick={handleSubmit} disabled={submitDisabled}>
-                Submit
-            </button>
-        </>
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <button
+                    className="collect-details-btn"
+                    onClick={handleSubmit}
+                    disabled={submitDisabled}
+                    style={{
+                        marginTop: '2.5rem',
+                        background: submitDisabled ? '#e0e0e0' : '#43a047',
+                        color: submitDisabled ? '#aaa' : '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '0.75rem 2rem',
+                        fontWeight: 'bold',
+                        fontSize: '1.1rem',
+                        cursor: submitDisabled ? 'not-allowed' : 'pointer',
+                        boxShadow: submitDisabled ? 'none' : '0 2px 8px rgba(67,160,71,0.08)',
+                        transition: 'all 0.2s',
+                        minWidth: '120px',
+                    }}
+                >
+                    Submit
+                </button>
+            </div>
+        </div>
     );
 }
 
