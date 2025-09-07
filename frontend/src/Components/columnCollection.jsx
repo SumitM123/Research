@@ -17,7 +17,7 @@ function ColumnCollection(props) {
     const selectRef = useRef();
     const [arrIndex, setArrIndex] = useState(0);
 
-    const continueDisabled = useState(false);
+    const [continueDisabled, setContinueDisabled] = useState(false);
     const [backDisabled, setBackDisabled] = useState(true);
     const [valueOfNext, setValueOfNext] = useState("Continue");
     const [warning, setWarning] = useState("");
@@ -66,14 +66,24 @@ function ColumnCollection(props) {
         selectOptions(arrIndex);
     }
     const handleBackClick = (e) => {
-        setArrIndex(prevValue => prevValue - 1);
-        const valToRemove = indexToDataBaseHeaders.remove(arrIndex);
-        setUsedDataBaseHeaders(prevValue => {
-            prevValue.remove(valToRemove)
+        setArrIndex(prevValue => {
+            const newIndex = prevValue - 1;
+            // Remove mapping for previous index
+            setIndexToDataBaseHeaders(prevMap => {
+                const newMap = new Map(prevMap);
+                newMap.delete(newIndex);
+                return newMap;
+            });
+            setUsedDataBaseHeaders(prevSet => {
+                const newSet = new Set(prevSet);
+                // Remove the value for previous index
+                const valToRemove = indexToDataBaseHeaders.get(newIndex);
+                newSet.delete(valToRemove);
+                return newSet;
+            });
+            setBackDisabled(checkBackDisabled(newIndex));
+            return newIndex;
         });
-        //usedDataBaseHeaders.remove(valToRemove);
-        backDisabled = checkBackDisabled(arrIndex);
-        selectOptions(arrIndex);
     }
     const handleSelect = (e) => {
         //e.target references the specific dom element that triggered the event listener
@@ -84,27 +94,26 @@ function ColumnCollection(props) {
     }
     function selectOptions(index) {
         const currentMatch = potentialToMatch[index];
+        const selected = indexToDataBaseHeaders.get(index) || "";
         return (
-            <select onChange={handleSelect} disabled={inFirstHalf}>
-                Please select a column from the data base file to match with {currentMatch}
+            <select value={selected} onChange={handleSelect} disabled={inFirstHalf} ref={selectRef}>
                 <option value="" disabled>
-            -- Select a column from your database collection to match with your data collection file--
+                    -- Select a column from your database collection to match with your data collection file--
                 </option>
                 {(dataBaseHeaders || []).map((topic, idx) => (
                     <option key={idx} value={topic}>
-                    {topic}
+                        {topic}
                     </option>
                 ))}
                 <p style={{ color: "red" }}>
                     {warning}
                 </p>
             </select>
-
-        )
+        );
     }
     return (
         <div>
-            {selectOptions(arrIndex)};
+            {selectOptions(arrIndex)}
             <button onClick={handleBackClick} disabled={backDisabled}>
                 Back
             </button>
