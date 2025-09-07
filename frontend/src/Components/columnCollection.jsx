@@ -23,30 +23,31 @@ function ColumnCollection(props) {
 
     const [continueDisabled, setContinueDisabled] = useState(false);
     const [backDisabled, setBackDisabled] = useState(true);
-    const [valueOfNext, setValueOfNext] = useState("Continue");
+    const [submitDisabled, setSubmitDisabled] = useState(true);
+    const [valueOfNext, setValueOfNext] = useState(arrIndex < potentialToMatch.length - 1 ? "Continue" : "Done" );
     const [warning, setWarning] = useState("");
     
     //will return true if back button should be disabled, and false otherwise
     const checkBackDisabled = (index) => {
-        const backVal = false;
-        if(index <= 0) {
-            backVal = true;
-        } else {
-            backVal = false;
-        }
-        return backVal;
+        return index <= 0;
     }
-
+    const checkContinueDisabled = (index) => {
+        return index >= potentialToMatch.length;
+    }
+    const checkSubmitDisabled = (index) => { 
+        return index < potentialToMatch.length;
+    }
     //will update the value of the next button 
     const handleContinueClick = (e) => {
         //MouseEvent which is a subclass of Event interface
         //insert the current element of the shi into usedDataBaseHeaders and indexToDataBaseHeaders
-        if(valueOfNext === "Done" && arrIndex >= potentialToMatch.length) {
-            for(const [key, value] of dataFileToDataBaseHeader) {
-                setMatches(prevValue => [...prevValue, {dataFileColumn: key, dataBaseFileColumn: value}]);
-            }
-            navigate('/outputPage');
-        }
+        
+        // if(valueOfNext === "Done" || arrIndex >= potentialToMatch.length) {
+        //     for(const [key, value] of dataFileToDataBaseHeader) {
+        //         setMatches(prevValue => [...prevValue, {dataFileColumn: key, dataBaseFileColumn: value}]);
+        //     }
+            
+        // }
         setUsedDataBaseHeaders(prevValue => new Set([...prevValue, selectRef.current.value]));
         //usedDataBaseHeaders.add(selectRef.current.value);
         setIndexToDataBaseHeaders(prevValue => {
@@ -66,18 +67,15 @@ function ColumnCollection(props) {
         if(arrIndex >= (potentialToMatch.length - 1)) {
             setValueOfNext("Done");
         }
-        backDisabled = checkBackDisabled(arrIndex);
+        setBackDisabled(checkBackDisabled(arrIndex));
+        setContinueDisabled(checkContinueDisabled(arrIndex));
+        setSubmitDisabled(checkSubmitDisabled(arrIndex));
         selectOptions(arrIndex);
     }
     const handleBackClick = (e) => {
         setArrIndex(prevValue => {
             const newIndex = prevValue - 1;
             // Remove mapping for previous index
-            setIndexToDataBaseHeaders(prevMap => {
-                const newMap = new Map(prevMap);
-                newMap.delete(newIndex);
-                return newMap;
-            });
             setUsedDataBaseHeaders(prevSet => {
                 const newSet = new Set(prevSet);
                 // Remove the value for previous index
@@ -85,7 +83,14 @@ function ColumnCollection(props) {
                 newSet.delete(valToRemove);
                 return newSet;
             });
+            setIndexToDataBaseHeaders(prevMap => {
+                const newMap = new Map(prevMap);
+                newMap.delete(newIndex);
+                return newMap;
+            });
             setBackDisabled(checkBackDisabled(newIndex));
+            setContinueDisabled(checkContinueDisabled(newIndex));
+            setSubmitDisabled(checkSubmitDisabled(newIndex));
             return newIndex;
         });
     }
@@ -100,7 +105,7 @@ function ColumnCollection(props) {
         const currentMatch = potentialToMatch[index];
         const selected = indexToDataBaseHeaders.get(index) || "";
         return (
-            <select value={selected} onChange={handleSelect} disabled={inFirstHalf} ref={selectRef}>
+            <select defaultValue="" onChange={handleSelect} disabled={inFirstHalf} ref={selectRef} required>
                 <option value="" disabled>
                     -- Select a column from your database collection to match with your data collection file--
                 </option>
@@ -115,16 +120,32 @@ function ColumnCollection(props) {
             </select>
         );
     }
+    const handleSubmit = (e) => {
+        for(const [key, value] of dataFileToDataBaseHeader) {
+            setMatches(prevValue => [...prevValue, {dataFileColumn: key, dataBaseFileColumn: value}]);
+        }
+        navigate('/outputPage');
+    }
+
     return (
-    <div key={key}>
-            {selectOptions(arrIndex)}
-            <button onClick={handleBackClick} disabled={backDisabled}>
-                Back
+        <>
+            <div key={key}>
+                <label>
+                    Select the database header to match with the {currentMatch} column:
+                </label>
+                {selectOptions(arrIndex)}
+                <button onClick={handleBackClick} disabled={backDisabled}>
+                    Back
+                </button>
+                <button onClick={handleContinueClick} disabled={continueDisabled}>
+                    Continue
+                </button>
+            </div>
+            <button onClick={handleSubmit} disabled={submitDisabled}>
+                Submit
             </button>
-            <button onClick={handleContinueClick} disabled={continueDisabled}>
-                {valueOfNext}
-            </button>
-        </div>
-    )
+        </>
+    );
 }
+
 export default ColumnCollection;

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState} from "react";
 import { useColumnInfo } from "../Contexts/columnInfoContext.js";
 import "./collectDetails.css"
 import ColumnCollection from "../Components/columnCollection.jsx";
+import { useNavigate } from "react-router-dom";
 const CollectDetails = () => {
   //Can only use hooks at the top most level of the functional component. Cannot use hooks inside of a inner function
   const {
@@ -11,7 +12,7 @@ const CollectDetails = () => {
     topicMatch, 
     setTopicMatch
   } = useColumnInfo();
-
+  const navigate = useNavigate();
   const [inFirstHalf, setInFirstHalf] = useState(true);
   //first half page tag references
   const [dataFileRef, setDataFileRef] = useState("");
@@ -56,10 +57,12 @@ const CollectDetails = () => {
       return "Back";
     }
   }
-  useEffect( () => {
-    // No longer needed
-  }, [dataFileRef, dataBaseRef]);
-
+  const goToOutputPage = () => {
+    navigate('/outputPage');
+  }
+  const checkSubmitDisabled = () => {
+    //submit button should be enabled when all data collection file columns have been matched
+  }
   return (
     <div className="collect-details-page">
       <div className="collect-details-card">
@@ -137,8 +140,8 @@ const CollectDetails = () => {
             </div>
             {/* Submit Button */}
             <div style={{ textAlign: "center" }}>
-              <button type="button" className="collect-details-button" onClick={goBackToFirstHalf}>
-                Back
+              <button type="button" disabled={checkSubmitDisabled} className="collect-details-button" onClick={goToOutputPage()}>
+                Submit
               </button>
             </div>
           </div>
