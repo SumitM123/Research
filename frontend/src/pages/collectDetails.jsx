@@ -7,20 +7,18 @@ const CollectDetails = () => {
   const {
     dataFileAvailableTopics, //data collection file headers
     dataBaseFileAvailableTopics,  //data base file headers
-    potentialToMatch
+    potentialToMatch,
+    topicMatch, 
+    setTopicMatch
   } = useColumnInfo();
 
-  const [lightUpNextButton, setLightUpNextButton] = useState(false);
   const [inFirstHalf, setInFirstHalf] = useState(true);
   //first half page tag references
   const [dataFileRef, setDataFileRef] = useState("");
   const [dataBaseRef, setDataBaseRef] = useState("");
+  const [resetKey, setResetKey] = useState(0); // for resetting child
   //key is the data collection file column name, and the value is the data base file column
-  const columnMatches = useState(new Map());
-  //the already selected data base headers
-  const dataBaseHeadersSelected = useState(new Set());
-  //the already selected data collection headers
-  const dataCollectionHeadersSelected = useState(new Set());
+  const [initialMatch, setInitialMatch] = useState({});
   const getUpdatedDataCollectionArr = () => {
     //get the updated array
                 //key is the data collection file column name, and the value is the data base file column
@@ -39,18 +37,17 @@ const CollectDetails = () => {
     //if going back to first half, then you have to restart the entire column matches setting lol
     
     //remove the previous column matches
-    columnMatches.clear();
-    
-    inFirstHalf = true;
-
+  setInitialMatch({});
+  setDataFileRef("");
+  setDataBaseRef("");
+  setInFirstHalf(true);
+  setResetKey(prev => prev + 1); // force child remount
   }
   const goToSecondHalf = () => {
     //console.log("Inside goToSecondHalf");
-    setInFirstHalf(false);
-    setLightUpNextButton(true);
-    columnMatches.set(dataFileRef, dataBaseRef); //Do this line and the next line once the first half is submitted
-    dataCollectionHeadersSelected.add(dataFileRef);
-    dataBaseHeadersSelected.add(dataBaseRef);
+  setInFirstHalf(false);
+  setInitialMatch({dataFileMatch: dataFileRef, dataBaseMatch: dataBaseRef});
+  setTopicMatch({dataFileMatch: dataFileRef, dataBaseMatch: dataBaseRef});
   }
   const buttonValForFirstHalf = () => {
     if(inFirstHalf) {
@@ -60,9 +57,7 @@ const CollectDetails = () => {
     }
   }
   useEffect( () => {
-    if(dataFileRef !== "" && dataBaseRef !== "") {
-      setLightUpNextButton(true);
-    }
+    // No longer needed
   }, [dataFileRef, dataBaseRef]);
 
   return (
@@ -73,7 +68,10 @@ const CollectDetails = () => {
         </h1>
 
         <form className="collect-details-form">
-          <div className="firstHalfWrapper">
+          <div
+            className="firstHalfWrapper"
+            style={inFirstHalf ? {} : { opacity: 0.5, pointerEvents: "none" }}
+          >
             {/* Data Collection File */}
             <div>
               <label className="collect-details-label">
@@ -84,7 +82,7 @@ const CollectDetails = () => {
                 <option value="" disabled>
                   -- Select a column --
                 </option>
-                {(getUpdatedDataCollectionArr() || []).map((topic, idx) => (
+                {(dataFileAvailableTopics || []).map((topic, idx) => (
                   <option key={idx} value={topic}>
                     {topic}
                   </option>
@@ -109,25 +107,38 @@ const CollectDetails = () => {
                 ))}
               </select>
             </div>
-            <button onClick={goToSecondHalf} disabled={!(dataFileRef && dataBaseRef)}>
-              {buttonValForFirstHalf()}
+            <button
+              type="button"
+              onClick={() => {
+                if (inFirstHalf) {
+                  goToSecondHalf();
+                } else {
+                  goBackToFirstHalf();
+                }
+              }}
+              disabled={inFirstHalf ? !(dataFileRef && dataBaseRef) : false}
+            >
+              {inFirstHalf ? "Next" : "Back"}
             </button>
           </div>
-          {/* For each potentialToMatch from the data collection file, you have to match with one of the columns in the database headers file.  */}
-          {/* ADD LOGIC SO THAT THIS ONLY POPS UP WITH THE RIGHT UPDATED COLUMNS AND IF THE PAST TWO FIELDS HAVE BEEN INPUTTED*/}
-          <div className="secondHalfWrapper">
+          <div
+            className="secondHalfWrapper"
+            style={!inFirstHalf ? {} : { opacity: 0.5, pointerEvents: "none" }}
+          >
             <h2 className="collect-details-subtitle">Enter Sample Values</h2>
             <div className="collect-details-grid">
               <ColumnCollection
                 columnsToMatch={potentialToMatch || []}
                 headers={dataBaseFileAvailableTopics || []}
                 disabled={inFirstHalf}
+                topicMatch={initialMatch}
+                key={resetKey}
               />            
             </div>
             {/* Submit Button */}
             <div style={{ textAlign: "center" }}>
-              <button type="submit" className="collect-details-button">
-                Continue
+              <button type="button" className="collect-details-button" onClick={goBackToFirstHalf}>
+                Back
               </button>
             </div>
           </div>

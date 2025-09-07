@@ -6,14 +6,18 @@ function ColumnCollection(props) {
     const potentialToMatch = props.columnsToMatch;
     const dataBaseHeaders = props.headers;
     const inFirstHalf = props.disabled;
+    // Add key to force remount on reset
+    const key = props.resetKey || 0;
+    //dataFileMatch and dataBaseMatch
+    const topicMatch = props.topicMatch;
     //context column info for setting the matches
     const {matches, setMatches} = useColumnInfo();
     
     const navigate = useNavigate();
     //When updating these objects, ALWAYS return a new object, instead of just modifying the previous object because react will not re-render the component if the reference to the object does not change. You have to treat it as immutable   
-    const [usedDataBaseHeaders, setUsedDataBaseHeaders] = useState(new Set());
-    const [indexToDataBaseHeaders, setIndexToDataBaseHeaders] = useState(new Map());
-    const [dataFileToDataBaseHeader, setDataFileToDataBaseHeaders] = useState(new Map());
+    const [usedDataBaseHeaders, setUsedDataBaseHeaders] = useState(new Set(topicMatch.dataBaseMatch ));
+    const [indexToDataBaseHeaders, setIndexToDataBaseHeaders] = useState(() => new Map([[-1, topicMatch.dataBaseMatch]]));    
+    const [dataFileToDataBaseHeader, setDataFileToDataBaseHeaders] = useState(() => new Map([[topicMatch.dataFileMatch, topicMatch.dataBaseMatch ]]));
     const selectRef = useRef();
     const [arrIndex, setArrIndex] = useState(0);
 
@@ -112,7 +116,7 @@ function ColumnCollection(props) {
         );
     }
     return (
-        <div>
+    <div key={key}>
             {selectOptions(arrIndex)}
             <button onClick={handleBackClick} disabled={backDisabled}>
                 Back
