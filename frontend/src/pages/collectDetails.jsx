@@ -15,6 +15,8 @@ const CollectDetails = () => {
   const navigate = useNavigate();
   const [inFirstHalf, setInFirstHalf] = useState(true);
   //first half page tag references
+  const selectDataFileRef = useRef(null);
+  const selectDataBaseRef = useRef(null);
   const [dataFileRef, setDataFileRef] = useState("");
   const [dataBaseRef, setDataBaseRef] = useState("");
   const [resetKey, setResetKey] = useState(0); // for resetting child
@@ -38,11 +40,13 @@ const CollectDetails = () => {
     //if going back to first half, then you have to restart the entire column matches setting lol
     
     //remove the previous column matches
-  setInitialMatch({});
-  setDataFileRef("");
-  setDataBaseRef("");
-  setInFirstHalf(true);
-  setResetKey(prev => prev + 1); // force child remount
+    selectDataFileRef.current.value = "";
+    selectDataBaseRef.current.value = "";
+    setInitialMatch({});
+    setDataFileRef("");
+    setDataBaseRef("");
+    setInFirstHalf(true);
+    setResetKey(prev => prev + 1); // force child remount
   }
   const goToSecondHalf = () => {
     //console.log("Inside goToSecondHalf");
@@ -65,6 +69,7 @@ const CollectDetails = () => {
         </h1>
 
         <form className="collect-details-form">
+          {/* FIRST HALF WRAPPER */}
           <div
             className="firstHalfWrapper"
             style={inFirstHalf ? {} : { opacity: 0.5, pointerEvents: "none" }}
@@ -74,8 +79,8 @@ const CollectDetails = () => {
               <label className="collect-details-label">
                 Select a column from your <span style={{ color: "#2563eb" }}>Data Collection File</span>:
               </label>
-              <select required className="collect-details-select" defaultValue=""  disabled={!inFirstHalf} 
-                 onChange={(e) => setDataFileRef(prevValue => e.target.value)}> 
+              <select required className="collect-details-select" defaultValue="" disabled={!inFirstHalf}
+                onChange={(e) => setDataFileRef(prevValue => e.target.value)} ref={selectDataFileRef}>
                 <option value="" disabled>
                   -- Select a column --
                 </option>
@@ -93,7 +98,7 @@ const CollectDetails = () => {
                 Select a column from your <span style={{ color: "#16a34a" }}>Database File</span>:
               </label>
               <select required className="collect-details-select" defaultValue="" disabled={!inFirstHalf}
-                onChange={(e) => setDataBaseRef(prevValue => e.target.value)}>
+                onChange={(e) => setDataBaseRef(prevValue => e.target.value)} ref={selectDataBaseRef}>
                 <option value="" disabled>
                   -- Select a column --
                 </option>
@@ -106,31 +111,66 @@ const CollectDetails = () => {
             </div>
             <button
               type="button"
-              onClick={() => {
-                if (inFirstHalf) {
-                  goToSecondHalf();
-                } else {
-                  goBackToFirstHalf();
-                }
+              onClick={goToSecondHalf}
+              disabled={!(dataFileRef && dataBaseRef)}
+              className="collect-details-btn"
+              style={{
+                marginTop: '1.5rem',
+                background: '#1976d2',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.5rem 1.5rem',
+                fontWeight: 'bold',
+                cursor: !(dataFileRef && dataBaseRef) ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+                minWidth: '120px',
               }}
-              disabled={inFirstHalf ? !(dataFileRef && dataBaseRef) : false}
             >
-              {inFirstHalf ? "Next" : "Back"}
+              Next
             </button>
           </div>
+
+          {/* SECOND HALF WRAPPER */}
           <div
             className="secondHalfWrapper"
-            style={!inFirstHalf ? {} : { opacity: 0.5, pointerEvents: "none" }}
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              marginBottom: '0.5rem',
+              opacity: !inFirstHalf ? 1 : 0.5,
+              pointerEvents: !inFirstHalf ? 'auto' : 'none',
+              transition: 'opacity 0.2s',
+            }}
           >
-            <h2 className="collect-details-subtitle">Enter Sample Values</h2>
-            <div className="collect-details-grid">
               <ColumnCollection
                 columnsToMatch={potentialToMatch || []}
                 headers={dataBaseFileAvailableTopics || []}
                 disabled={inFirstHalf}
                 topicMatch={initialMatch}
                 key={resetKey}
-              />            
+              />
+            <div style={{ display: !inFirstHalf ? 'flex' : 'none', justifyContent: 'center', marginTop: '2rem' }}>
+              <button
+                type="button"
+                onClick={goBackToFirstHalf}
+                className="collect-details-btn"
+                style={{
+                  background: '#fff',
+                  color: '#1976d2',
+                  border: '1px solid #1976d2',
+                  borderRadius: '6px',
+                  padding: '0.5rem 1.5rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  minWidth: '120px',
+                }}
+              >
+                Back to first half
+              </button>
             </div>
           </div>
         </form>

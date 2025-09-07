@@ -156,6 +156,7 @@ function ColumnCollection(props) {
                 justifyContent: 'center',
             }}
         >
+            <h2> Enter Sample Values</h2>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <label className="collect-details-label" style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '1.25rem', display: 'block', textAlign: 'center' }}>
                     Select the database header to match with the <span style={{ color: '#1976d2' }}>{currentMatch}</span> column:
