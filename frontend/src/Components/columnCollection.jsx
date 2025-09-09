@@ -43,7 +43,7 @@ function ColumnCollection(props) {
     }
     const checkSubmitDisabled = (index) => { 
         //submit it enabled only when all the matches are done
-        return index <= potentialToMatch.length - 1;
+        return index >= potentialToMatch.length;
     }
     //will update the value of the next button 
     const handleContinueClick = (e) => {
@@ -59,18 +59,10 @@ function ColumnCollection(props) {
             newMap.set(potentialToMatch[arrIndex], selectRef.current.value);
             return newMap;
         });
-        //if less than the last index
-        if (arrIndex < potentialToMatch.length - 1) {
-            setArrIndex(prevValue => prevValue + 1);
-            setValueOfNext(arrIndex + 1 === potentialToMatch.length - 1 ? "Done" : "Continue");
-            setContinueDisabled(false);
-            setSubmitDisabled(true);
-        } else {
-            // Last match, enable submit
-            setValueOfNext("Done");
-            setContinueDisabled(true);
-            setSubmitDisabled(false);
-        }
+        setArrIndex(prevValue => prevValue + 1);
+        setValueOfNext(arrIndex >= potentialToMatch.length - 1 ? "Done" : "Continue");
+        setContinueDisabled(true);
+        setSubmitDisabled(checkSubmitDisabled(arrIndex));
         setBackDisabled(checkBackDisabled(arrIndex));
         selectOptions(arrIndex);
     }
@@ -91,7 +83,7 @@ function ColumnCollection(props) {
                 return newMap;
             });
             setBackDisabled(checkBackDisabled(newIndex));
-            setContinueDisabled(checkContinueDisabled(newIndex));
+            setContinueDisabled(true);
             setSubmitDisabled(checkSubmitDisabled(newIndex));
             return newIndex;
         });
@@ -121,7 +113,7 @@ function ColumnCollection(props) {
                     style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem', marginBottom: '0.5rem' }}
                 >
                     <option value="" disabled>
-                        -- Select a column from your database collection to match with your data collection file--
+                        -- Select a column from your data collection to match with your database file--
                     </option>
                     {(dataBaseHeaders || []).map((topic, idx) => (
                         <option key={idx} value={topic}>
