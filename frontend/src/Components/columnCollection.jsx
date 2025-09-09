@@ -27,7 +27,7 @@ function ColumnCollection(props) {
     const selectRef = useRef();
     const [arrIndex, setArrIndex] = useState(0);
     const currentMatch = potentialToMatch[arrIndex];
-    const [continueDisabled, setContinueDisabled] = useState(potentialToMatch.length <= 1 ? true : false);
+    const [continueDisabled, setContinueDisabled] = useState(true);
     const [backDisabled, setBackDisabled] = useState(true);
     const [submitDisabled, setSubmitDisabled] = useState(true);
     const [valueOfNext, setValueOfNext] = useState("Continue");
@@ -59,13 +59,19 @@ function ColumnCollection(props) {
             newMap.set(potentialToMatch[arrIndex], selectRef.current.value);
             return newMap;
         });
-        setArrIndex(prevValue => prevValue + 1);
-        if(arrIndex >= (potentialToMatch.length - 1)) {
+        //if less than the last index
+        if (arrIndex < potentialToMatch.length - 1) {
+            setArrIndex(prevValue => prevValue + 1);
+            setValueOfNext(arrIndex + 1 === potentialToMatch.length - 1 ? "Done" : "Continue");
+            setContinueDisabled(false);
+            setSubmitDisabled(true);
+        } else {
+            // Last match, enable submit
             setValueOfNext("Done");
+            setContinueDisabled(true);
+            setSubmitDisabled(false);
         }
         setBackDisabled(checkBackDisabled(arrIndex));
-        setContinueDisabled(checkContinueDisabled(arrIndex));
-        setSubmitDisabled(checkSubmitDisabled(arrIndex));
         selectOptions(arrIndex);
     }
     const handleBackClick = (e) => {
@@ -94,6 +100,9 @@ function ColumnCollection(props) {
         //e.target references the specific dom element that triggered the event listener
         if(usedDataBaseHeaders.has(e.target.value)) {
             setWarning("Warning: this data base header has already been assigned to a different column");
+        }
+        if(e.target.value !== "") {
+            setContinueDisabled(false);
         }
         // if(e.target.value !== "" && ) {
         setWarning("");
