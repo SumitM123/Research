@@ -50,10 +50,7 @@ function App() {
     formData.append('dataFile', dataFile);
     formData.append('dataBaseFile', databaseFile);
     formData.append('topic', topic);
-    // formData.append('dataFileColumn', dataFileColumn);
-    // formData.append('dataBaseFileColumn', dataBaseFileColumn);
-    // formData.append('description', description);
-    formData.append('topic', topic);
+
     try {
       const response = await axios.post("/processFiles", formData, {
         headers: {
@@ -64,11 +61,11 @@ function App() {
       
       columnInfo.setDataFileAvailableTopics(response.data.payload.dataFileHeaders);
       columnInfo.setDataBaseFileAvailableTopics(response.data.payload.dataBaseFileHeaders);
-      
-      console.log(JSON.stringify(response.data));
-
+      columnInfo.setPotentialToMatch(response.data.payload.potentialToMatch);
+      //console.log(JSON.stringify(response.data));
+      console.log("Outside of the server. Getting potentialToMatch: "  + columnInfo.potentialToMatch);
       //console.log(response.data);
-      console.log("Response from server" + response.message);
+      //console.log("Response from server" + response.message);
     } catch (error) {
       console.error('Error uploading files:', error);
       //alert("Error uploading files. Please try again.");

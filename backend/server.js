@@ -123,6 +123,8 @@ app.post(
       const dataFileRow = dataFileSplit[1]?.split(",") || [];
       const dataBaseFileRow = dataBaseFileSplit[1]?.split(",") || [];
 
+      console.log("Data file first row: " + dataFileRow);
+      console.log("Data base file first row: " + dataBaseFileRow);
       // // Ensure chosen columns exist in headers
       // if (!dataFileHeaders.includes(dataFileColumn)) {
       //   return res.status(400).json({
@@ -145,34 +147,34 @@ app.post(
       //   (col) => !dataBaseFileRow.includes(col)
       // );
 
-      let potentialToMatch = new Set();
+      let potentialToMatchSet = new Set();
       for(let i = 0; i < dataFileHeaders.length; i++) {
         if(i >= dataFileRow.length) {
-          potentialToMatch.add(dataFileHeaders[i]);
+          potentialToMatchSet.add(dataFileHeaders[i]);
         }
       }
-      let potentialToMatch2 = [];
-      for(let i = 0; i < dataBaseFileHeaders.length; i++) {
-        if(i >= dataBaseFileRow.length) {
-          potentialToMatch2.push(dataBaseFileHeaders[i]);
-        }
-      }
-      console.log("Data file headers:" + dataFileHeaders);
-      console.log("Database file headers: " + dataBaseFileHeaders);
+
+      const potentialToMatch = Array.from(potentialToMatchSet);
+      // let potentialToMatch2 = [];
+      // for(let i = 0; i < dataBaseFileHeaders.length; i++) {
+      //   if(i >= dataBaseFileRow.length) {
+      //     potentialToMatch2.push(dataBaseFileHeaders[i]);
+      //   }
+      // }
+      // console.log("Data file headers:" + dataFileHeaders);
+      // console.log("Database file headers: " + dataBaseFileHeaders);
       let strPotentialToMatch = "";
       for(const item of potentialToMatch) {
         strPotentialToMatch += item + ", ";
       }
-      console.log("Data file potential:" + strPotentialToMatch);
-      console.log("Database file potential: " + potentialToMatch2);
-      // Success response
+      console.log("Data file potential string:" + strPotentialToMatch);
+
       return res.status(200).json({
         message: "Files processed successfully",
         payload: {
           dataFileHeaders,
           dataBaseFileHeaders,
-          potentialToMatch,
-          potentialToMatch2,
+          potentialToMatch
         }
       });
     } catch (error) {

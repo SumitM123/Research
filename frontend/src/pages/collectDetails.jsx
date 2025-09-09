@@ -9,8 +9,8 @@ const CollectDetails = () => {
     dataFileAvailableTopics, //data collection file headers
     dataBaseFileAvailableTopics,  //data base file headers
     potentialToMatch,
-    topicMatch, 
-    setTopicMatch
+    initialTopicMatch, 
+    setIntialTopicMatch,
   } = useColumnInfo();
   const navigate = useNavigate();
   const [inFirstHalf, setInFirstHalf] = useState(true);
@@ -50,9 +50,8 @@ const CollectDetails = () => {
   }
   const goToSecondHalf = () => {
     //console.log("Inside goToSecondHalf");
-  setInFirstHalf(false);
-  setInitialMatch({dataFileMatch: dataFileRef, dataBaseMatch: dataBaseRef});
-  setTopicMatch({dataFileMatch: dataFileRef, dataBaseMatch: dataBaseRef});
+    setInFirstHalf(false);
+    setInitialMatch({dataFileMatch: dataFileRef, dataBaseMatch: dataBaseRef});
   }
   const buttonValForFirstHalf = () => {
     if(inFirstHalf) {

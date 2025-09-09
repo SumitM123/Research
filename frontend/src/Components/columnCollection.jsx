@@ -1,6 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useColumnInfo } from '../Contexts/columnInfoContext';
+/* 
+    Things to fix tomorrow:
+        * Fix columnMatch not showing up anything
+        * The back and continue button aren't working once all the matches are done
+*/
+
 function ColumnCollection(props) {
     //getting props
     const potentialToMatch = props.columnsToMatch;
@@ -11,7 +17,7 @@ function ColumnCollection(props) {
     //dataFileMatch and dataBaseMatch
     const topicMatch = props.topicMatch;
     //context column info for setting the matches
-    const {matches, setMatches} = useColumnInfo();
+    const {matches, setMatches, initialTopicMatch, setInitialTopicMatch} = useColumnInfo();
     
     const navigate = useNavigate();
     //When updating these objects, ALWAYS return a new object, instead of just modifying the previous object because react will not re-render the component if the reference to the object does not change. You have to treat it as immutable   
@@ -20,13 +26,14 @@ function ColumnCollection(props) {
     const [dataFileToDataBaseHeader, setDataFileToDataBaseHeaders] = useState(() => new Map([[topicMatch.dataFileMatch, topicMatch.dataBaseMatch ]]));
     const selectRef = useRef();
     const [arrIndex, setArrIndex] = useState(0);
-
-    const [continueDisabled, setContinueDisabled] = useState(false);
+    const currentMatch = potentialToMatch[arrIndex];
+    const [continueDisabled, setContinueDisabled] = useState(potentialToMatch.length <= 1 ? true : false);
     const [backDisabled, setBackDisabled] = useState(true);
     const [submitDisabled, setSubmitDisabled] = useState(true);
     const [valueOfNext, setValueOfNext] = useState("Continue");
     const [warning, setWarning] = useState("");
     
+    console.log("Potential to match: ", potentialToMatch);
     //will return true if back button should be disabled, and false otherwise
     const checkBackDisabled = (index) => {
         return index <= 0;
@@ -35,35 +42,24 @@ function ColumnCollection(props) {
         return index >= potentialToMatch.length;
     }
     const checkSubmitDisabled = (index) => { 
-        return index < potentialToMatch.length;
+        //submit it enabled only when all the matches are done
+        return index <= potentialToMatch.length - 1;
     }
     //will update the value of the next button 
     const handleContinueClick = (e) => {
         //MouseEvent which is a subclass of Event interface
-        //insert the current element of the shi into usedDataBaseHeaders and indexToDataBaseHeaders
-        
-        // if(valueOfNext === "Done" || arrIndex >= potentialToMatch.length) {
-        //     for(const [key, value] of dataFileToDataBaseHeader) {
-        //         setMatches(prevValue => [...prevValue, {dataFileColumn: key, dataBaseFileColumn: value}]);
-        //     }
-            
-        // }
         setUsedDataBaseHeaders(prevValue => new Set([...prevValue, selectRef.current.value]));
-        //usedDataBaseHeaders.add(selectRef.current.value);
         setIndexToDataBaseHeaders(prevValue => {
             const newMap = new Map(prevValue);
             newMap.set(arrIndex, selectRef.current.value);
             return newMap;
         });
-        //indexToDataBaseHeaders.set(arrIndex, selectRef.current.value);
         setDataFileToDataBaseHeaders(prevValue => {
             const newMap = new Map(prevValue);
             newMap.set(potentialToMatch[arrIndex], selectRef.current.value);
             return newMap;
         });
-        //dataFileToDataBaseHeader.set(potentialToMatch[arrIndex], selectRef.current.value);
         setArrIndex(prevValue => prevValue + 1);
-        //arrIndex++;
         if(arrIndex >= (potentialToMatch.length - 1)) {
             setValueOfNext("Done");
         }
@@ -99,6 +95,7 @@ function ColumnCollection(props) {
         if(usedDataBaseHeaders.has(e.target.value)) {
             setWarning("Warning: this data base header has already been assigned to a different column");
         }
+        // if(e.target.value !== "" && ) {
         setWarning("");
     }
     function selectOptions(index) {
@@ -132,13 +129,14 @@ function ColumnCollection(props) {
         );
     }
     const handleSubmit = (e) => {
+        e.preventDefault();
         for(const [key, value] of dataFileToDataBaseHeader) {
             setMatches(prevValue => [...prevValue, {dataFileColumn: key, dataBaseFileColumn: value}]);
         }
+        setInitialTopicMatch(topicMatch)
         navigate('/outputPage');
     }
 
-    const currentMatch = potentialToMatch[arrIndex];
     return (
         <div
             key={key}
@@ -159,7 +157,7 @@ function ColumnCollection(props) {
             <h2> Enter Sample Values</h2>
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <label className="collect-details-label" style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '1.25rem', display: 'block', textAlign: 'center' }}>
-                    Select the database header to match with the <span style={{ color: '#1976d2' }}>{currentMatch}</span> column:
+                    Select the database header to match with the <span style={{ color: '#1976d2' }}>{currentMatch || "..."}</span> column:
                 </label>
                 {selectOptions(arrIndex)}
             </div>

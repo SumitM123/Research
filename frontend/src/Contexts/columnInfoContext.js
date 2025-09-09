@@ -18,13 +18,15 @@ export const ColumnInfoProvider = ({ children }) => {
     //available info to choose from for intial match
     const [dataFileAvailableTopics, setDataFileAvailableTopics] = useState([]);
     const [dataBaseFileAvailableTopics, setDataBaseFileAvailableTopics] = useState([]);
-    const [topicMatch, setTopicMatch] = useState({});
+    const [potentialToMatch, setPotentialToMatch] = useState([]);
+    //from the collectDetails page, we're getting the initial match of data and database column
+    const [initialTopicMatch, setInitialTopicMatch] = useState({});
     //each column from the dataFile to the dataBaseFile
     const [matches, setMatches] = useState([{}]);
     return (
         <columnInfo.Provider value={{ dataFileColumn, setDataFileColumn, dataBaseFileColumn, setDataBaseFileColumn, 
         dataFileAvailableTopics, setDataFileAvailableTopics, dataBaseFileAvailableTopics, setDataBaseFileAvailableTopics, 
-        matches, setMatches, topicMatch, setTopicMatch }}>
+        potentialToMatch, setPotentialToMatch, matches, setMatches, initialTopicMatch, setInitialTopicMatch }}>
             {children}
         </columnInfo.Provider>
     );
