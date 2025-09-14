@@ -8,6 +8,8 @@ import { useColumnInfo } from '../Contexts/columnInfoContext';
 */
 
 function ColumnCollection(props) {
+    // Track the selected value for the select box
+    const [selectedValue, setSelectedValue] = useState("");
     //getting props
     const potentialToMatch = props.columnsToMatch;
     const dataBaseHeaders = props.headers;
@@ -43,28 +45,35 @@ function ColumnCollection(props) {
     }
     const checkSubmitDisabled = (index) => { 
         //submit it enabled only when all the matches are done
-        return index >= potentialToMatch.length;
+        return index < potentialToMatch.length;
     }
     //will update the value of the next button 
     const handleContinueClick = (e) => {
+    // Reset select to first option for next match
+    setSelectedValue("");
         //MouseEvent which is a subclass of Event interface
-        setUsedDataBaseHeaders(prevValue => new Set([...prevValue, selectRef.current.value]));
-        setIndexToDataBaseHeaders(prevValue => {
-            const newMap = new Map(prevValue);
+        setUsedDataBaseHeaders(prevSet => {
+            const newSet = new Set(prevSet);
+            newSet.add(selectRef.current.value);
+            return newSet;
+        });
+        setIndexToDataBaseHeaders(prevMap => {
+            const newMap = new Map(prevMap);
             newMap.set(arrIndex, selectRef.current.value);
             return newMap;
         });
-        setDataFileToDataBaseHeaders(prevValue => {
-            const newMap = new Map(prevValue);
+        setDataFileToDataBaseHeaders(prevMap => {
+            const newMap = new Map(prevMap);
             newMap.set(potentialToMatch[arrIndex], selectRef.current.value);
             return newMap;
         });
-        setArrIndex(prevValue => prevValue + 1);
-        setValueOfNext(arrIndex >= potentialToMatch.length - 1 ? "Done" : "Continue");
-        setContinueDisabled(true);
-        setSubmitDisabled(checkSubmitDisabled(arrIndex));
-        setBackDisabled(checkBackDisabled(arrIndex));
-        selectOptions(arrIndex);
+        const newIndex = arrIndex + 1;
+        setArrIndex(newIndex);
+        setBackDisabled(checkBackDisabled(newIndex));
+        setContinueDisabled(checkContinueDisabled(newIndex));
+        setSubmitDisabled(checkSubmitDisabled(newIndex));
+        setValueOfNext(newIndex >= potentialToMatch.length - 1 ? "Done" : "Continue");
+        selectOptions(newIndex);
     }
     const handleBackClick = (e) => {
         setArrIndex(prevValue => {
@@ -85,27 +94,28 @@ function ColumnCollection(props) {
             setBackDisabled(checkBackDisabled(newIndex));
             setContinueDisabled(true);
             setSubmitDisabled(checkSubmitDisabled(newIndex));
+            setValueOfNext(newIndex >= potentialToMatch.length - 1 ? "Done" : "Continue");
+            selectOptions(newIndex);
             return newIndex;
         });
     }
     const handleSelect = (e) => {
         //e.target references the specific dom element that triggered the event listener
+        setSelectedValue(e.target.value);
         if(usedDataBaseHeaders.has(e.target.value)) {
             setWarning("Warning: this data base header has already been assigned to a different column");
+        } else {
+            setWarning("");
         }
-        if(e.target.value !== "") {
-            setContinueDisabled(false);
-        }
-        // if(e.target.value !== "" && ) {
-        setWarning("");
+        setContinueDisabled(e.target.value === "");
     }
     function selectOptions(index) {
-        const selected = indexToDataBaseHeaders.get(index) || "";
+        console.log("Arr Index: ", index);
         return (
             <div className="collect-details-card" style={{ padding: '1.5rem', marginBottom: '1rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <select
                     className="collect-details-select"
-                    defaultValue=""
+                    value={selectedValue}
                     onChange={handleSelect}
                     disabled={inFirstHalf}
                     ref={selectRef}

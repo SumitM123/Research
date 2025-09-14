@@ -191,8 +191,13 @@ app.get('/extractData', async (req, res) => {
   message = [
     new SystemMessage(`You are a helpful assistant that extracts data from CSV files.
       
-    You are given two CSV files. One is a database file, and another is a data collection file. You're task is to extract data from the database file based on the criteria of the data collection file. I'm going to
-    be saying dataFile and dataBaseFile. The dataFile is the data collection file, and the dataBaseFile is the database file.
+      You're given the following information: 
+        - data collection file: ${dataFile}
+        - database file: ${dataBaseFile}
+        - topic of interest: ${topic}
+        - initial match of columns between the two files: ${dataFileColumn} in dataFile corresponds to ${dataBaseFileColumn} in dataBaseFile.
+        - potential columns from data collection file to match with database file: ${potentialToMatch}
+        - Other matches between columns of dataFile and dataBaseFile: ${JSON.stringify(matches)}
 
       Topic of interest: {topic}
 

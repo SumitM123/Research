@@ -51,6 +51,7 @@ function App() {
     formData.append('dataBaseFile', databaseFile);
     formData.append('topic', topic);
 
+    //console.log("Data file object: " + JSON.stringify(dataFile));
     try {
       const response = await axios.post("/processFiles", formData, {
         headers: {
