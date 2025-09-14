@@ -47,7 +47,9 @@ function ColumnCollection(props) {
         //submit it enabled only when all the matches are done
         return index < potentialToMatch.length;
     }
-    //will update the value of the next button 
+    //will update the value of the next button
+
+    //All state changes that depend on arrIndex should be inside of the setter function of arrIndex so it's allays in sync
     const handleContinueClick = (e) => {
     // Reset select to first option for next match
     setSelectedValue("");
