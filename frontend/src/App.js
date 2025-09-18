@@ -52,12 +52,14 @@ function App() {
     formData.append('topic', topic);
 
     //console.log("Data file object: " + JSON.stringify(dataFile));
+    navigate('/loading');
     try {
       const response = await axios.post("/processFiles", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
+      
       //it's an array consisting of the topics that the user can selecct
       
       columnInfo.setDataFileAvailableTopics(response.data.payload.dataFileHeaders);

@@ -105,34 +105,76 @@ app.post(
 
       //spliting the data from each lin
       let dataFileSplit = [];
-      let dataBaseSplit = [];
-      const dataFileContent = fs.readFile(dataFilePath, "utf8", (err, data) => {
-        if (err) {
-          console.error("Error reading dataFile:", err);
-          return res.status(500).json({ message: "Error reading dataFile" });
-        }
-        dataFileSplit = data.split("\n").filter(Boolean);
-      });
+      let dataBaseFileSplit = [];
 
-      const dataBaseContent = fs.readFile(dataBaseFilePath, "utf8", (err, data) => {
-        if (err) {
-          console.error("Error reading dataBaseFile:", err);
-          return res.status(500).json({ message: "Error reading dataBaseFile" });
-        }
-        dataBaseSplit = data.split("\n").filter(Boolean);
-      });
+      //Ths is ASYNC code
+      // const dataFileContent = fs.readFileSync(dataFilePath, "utf8", (err, data) => {
+      //   if (err) {
+      //     console.error("Error reading dataFile:", err);
+      //     return res.status(500).json({ message: "Error reading dataFile" });
+      //   }
+      //   dataFileSplit = data.split("\n").filter(Boolean);
+      // });
 
-      // console.log("Data file split: " + dataFileSplit);
-      // console.log("Data base file split: " + dataBaseFileSplit);
+      // const dataBaseContent = fs.readFile(dataBaseFilePath, "utf8", (err, data) => {
+      //   if (err) {
+      //     console.error("Error reading dataBaseFile:", err);
+      //     return res.status(500).json({ message: "Error reading dataBaseFile" });
+      //   }
+      //   dataBaseSplit = data.split("\n").filter(Boolean);
+      // });
 
+      const dataFileContent = fs.readFileSync(dataFilePath, "utf8");
+      const dataBaseContent = fs.readFileSync(dataBaseFilePath, "utf8");
+      dataFileSplit = dataFileContent.split("\n").filter(Boolean);
+      dataBaseFileSplit = dataBaseContent.split("\n").filter(Boolean);
+    
       if (dataFileSplit.length <= 0 || dataBaseFileSplit.length <= 0) {
         return res.status(400).json({ message: "CSV files cannot be empty" });
       }
 
       // Extract headers + first row
-      const dataFileHeaders = dataFileSplit[0].split(",").map((h) => h.trim());
-      const dataBaseFileHeaders = dataBaseFileSplit[0].split(",").map((h) => h.trim());
+      
+      
 
+      //const dataFileHeaders = dataFileSplit[0].split(",").map((h) => h.trim());
+      let dataFileHeaders = [];
+      let dataFileHeaderString = dataFileSplit[0];
+      let currentHeader = "";
+      let quotation = false;
+      for(let i = 0; i < dataFileHeaderString.length; i++) {
+        if(dataFileHeaderString[i] === '"') {
+          quotation = !quotation;
+          continue;
+        }
+        if(dataFileHeaderString[i] === "," && quotation) {
+          currentHeader += dataFileHeaderString[i];
+        } else if (dataFileHeaderString[i] === "," && !quotation) {
+          dataFileHeaders.push(currentHeader.trim());
+          currentHeader = "";
+        } else if(dataFileHeaderString[i] !== ",") {
+          currentHeader += dataFileHeaderString[i];
+        }
+      }
+      //const dataBaseFileHeaders = dataBaseFileSplit[0].split(",").map((h) => h.trim());
+      let dataBaseFileHeaders = [];
+      let dataBaseFileHeaderString = dataBaseFileSplit[0];
+      currentHeader = "";
+      quotation = false;  
+      for(let i = 0; i < dataBaseFileHeaderString.length; i++) {
+        if(dataBaseFileHeaderString[i] === '"') {
+          quotation = !quotation;
+          continue;
+        }
+        if (dataBaseFileHeaderString[i] === "," && quotation) {
+          currentHeader += dataBaseFileHeaderString[i];
+        } else if (dataBaseFileHeaderString[i] === "," && !quotation) {
+          dataBaseFileHeaders.push(currentHeader.trim());
+          currentHeader = "";
+        } else if(dataBaseFileHeaderString[i] !== ",") {
+          currentHeader += dataBaseFileHeaderString[i];
+        }
+      }
       console.log("Data file headers: " + dataFileHeaders);
       console.log("Data base file headers: " + dataBaseFileHeaders);
 

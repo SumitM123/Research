@@ -35,6 +35,7 @@ const subTextStyle = {
   letterSpacing: '1px',
 };
 
+//maybe add props to tell it what to prompt to output so what stage it is at
 const LoadingPage = () => {
   return (
   <div style={loaderStyle}>
@@ -48,7 +49,7 @@ const LoadingPage = () => {
     </style>
     <div style={spinnerStyle}></div>
     <div style={textStyle}>Loading...</div>
-    <div style={subTextStyle}>Please wait while we prepare your data</div>
+    <div style={subTextStyle}>Please wait while we read your data</div>
   </div>
   );
 }
