@@ -16,7 +16,7 @@ function ColumnCollection(props) {
     const inFirstHalf = props.disabled;
     // Add key to force remount on reset
     const key = props.resetKey || 0;
-    //dataFileMatch and dataBaseMatch
+    //dataFileMatch and dataBaseMatch. This is the initial match
     const topicMatch = props.topicMatch;
     //context column info for setting the matches
     const {matches, setMatches, initialTopicMatch, setInitialTopicMatch} = useColumnInfo();
@@ -132,6 +132,7 @@ function ColumnCollection(props) {
                             {topic}
                         </option>
                     ))}
+                    <option value="None">None</option>
                 </select>
                 {warning && (
                     <div className="collect-details-warning" style={{ color: 'red', fontSize: '0.95rem', marginTop: '0.25rem' }}>

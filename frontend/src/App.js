@@ -63,6 +63,8 @@ function App() {
       columnInfo.setDataFileAvailableTopics(response.data.payload.dataFileHeaders);
       columnInfo.setDataBaseFileAvailableTopics(response.data.payload.dataBaseFileHeaders);
       columnInfo.setPotentialToMatch(response.data.payload.potentialToMatch);
+      columnInfo.setDataFileContent(response.data.payload.dataFileContent);
+      columnInfo.setDataBaseContent(response.data.payload.dataBaseContent);
       //console.log(JSON.stringify(response.data));
       console.log("Outside of the server. Getting potentialToMatch: "  + columnInfo.potentialToMatch);
       //console.log(response.data);

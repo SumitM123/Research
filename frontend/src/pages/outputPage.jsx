@@ -6,24 +6,28 @@ const { useFilesInfo } = require("../Contexts/filesContext.js");
 const OutputPage = () => {
     const columnInfo = useColumnInfo();
     const filesInfo = useFilesInfo();
+    const [outputFromServer, setOutputFromServer] = useState("");
     const result = async () => {
         try {
             const objectToSend = {
                 dataFile: filesInfo.dataFile,
                 dataBaseFile: filesInfo.databaseFile,
                 topic: filesInfo.topic,
-                dataFileColumn: columnInfo.dataFileColumn,
-                dataBaseFileColumn: columnInfo.dataBaseFileColumn,
-                potentialToMatch: Array.from(columnInfo.potentialToMatch),
-                matches: columnInfo.matches
+                initialDataFileColumn: columnInfo.initialTopicMatch.dataFileMatch,
+                initialDataBaseColumn: columnInfo.initialTopicMatch.dataBaseMatch,
+                potentialToMatch: columnInfo.potentialToMatch,
+                matches: columnInfo.matches,
+                dataBaseContent: columnInfo.dataBaseContent,
+                dataFileContent: columnInfo.dataFileContent
             }
             //const dataFileVal = JSON.stringify(filesInfo.dataFile);
             //console.log("dataFileVal: ", dataFileVal);
-            const response = axios.get('/extractData', matches, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
+
+            //MIGHT HAVE TO CHANGE TO POST REQUEST AND APPENDING THE OBJECT TO SEND TO THE REQ BODY
+            const response = await axios.get('/extractData', {
+                params: objectToSend
+            });
+            setOutputFromServer(response.data);
         } catch(error) {
             console.error("Error fetching data:", error);
         }
@@ -31,7 +35,7 @@ const OutputPage = () => {
   return (
     <div>
       <h1>Output Page</h1>
-
+        <p>{outputFromServer}</p>
     </div>
   );
 }

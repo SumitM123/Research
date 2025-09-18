@@ -37,6 +37,7 @@ const uploadDir = path.join(__dirname, "uploads")
 if(!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
+
 const storage = multer.diskStorage(
   {
     destination: (req, file, cb) => {
@@ -69,8 +70,6 @@ const upload = multer({
 //     console.error('❌ MongoDB connection error:', error);
 //   });
 
-const dataFileColumnArr = [];
-const dataBaseFileColumnArr = [];
 app.post(
   "/processFiles",
   upload.fields([
@@ -86,6 +85,9 @@ app.post(
         });
       }
 
+      //const dataFileOriginalName = req.files.dataFile[0].originalname;
+      //const dataBaseFileOriginalName = req.files.dataBaseFile[0].originalname;
+
       const dataFilePath = req.files.dataFile[0].path;
       const dataBaseFilePath = req.files.dataBaseFile[0].path;
 
@@ -99,17 +101,30 @@ app.post(
         });
       }
 
-      // Read file contents
-      const dataFileContent = fs.readFileSync(dataFilePath, "utf8").trim();
-      const dataBaseFileContent = fs.readFileSync(dataBaseFilePath, "utf8").trim();
-      //spliting the data from each line
+      // // Read file contents
+
+      //spliting the data from each lin
+
+      const dataFileContent = fs.readFile(dataFilePath, "utf8", (err, data) => {
+        if (err) {
+          console.error("Error reading dataFile:", err);
+          return res.status(500).json({ message: "Error reading dataFile" });
+        }
+      });
+
+      const dataBaseContent = fs.readFile(dataBaseFilePath, "utf8", (err, data) => {
+        if (err) {
+          console.error("Error reading dataBaseFile:", err);
+          return res.status(500).json({ message: "Error reading dataBaseFile" });
+        }
+      });
+
       const dataFileSplit = dataFileContent.split("\n").filter(Boolean);
       const dataBaseFileSplit = dataBaseFileContent.split("\n").filter(Boolean);
-
       // console.log("Data file split: " + dataFileSplit);
       // console.log("Data base file split: " + dataBaseFileSplit);
 
-      if (!dataFileSplit.length || !dataBaseFileSplit.length) {
+      if (dataFileSplit.length <= 0 || dataBaseFileSplit.length <= 0) {
         return res.status(400).json({ message: "CSV files cannot be empty" });
       }
 
@@ -169,17 +184,20 @@ app.post(
       }
       console.log("Data file potential string:" + strPotentialToMatch);
 
+      //RETURN THE FILE CONTENT OF BOTH FILES TO CLIENT AND SAVE IT
       return res.status(200).json({
         message: "Files processed successfully",
         payload: {
           dataFileHeaders,
           dataBaseFileHeaders,
-          potentialToMatch
+          potentialToMatch,
+          dataFileContent,
+          dataBaseContent
         }
       });
     } catch (error) {
       console.error("Error processing files:", error);
-      res.status(500).json({
+      return res.status(500).json({
         message: "Error processing files",
         error: error.message,
       });
@@ -188,85 +206,88 @@ app.post(
 );
 
 app.get('/extractData', async (req, res) => {
+  const {dataFile, dataBaseFile, topic, initialDataFileColumn, initialDataBaseColumn, potentialToMatch, matches} = req.params;  
   message = [
-    new SystemMessage(`You are a helpful assistant that extracts data from CSV files.
+    new SystemMessage(`
+    You are a helpful assistant that extracts data from CSV files.
       
-      You're given the following information: 
-        - data collection file: ${dataFile}
-        - database file: ${dataBaseFile}
-        - topic of interest: ${topic}
-        - initial match of columns between the two files: ${dataFileColumn} in dataFile corresponds to ${dataBaseFileColumn} in dataBaseFile.
-        - potential columns from data collection file to match with database file: ${potentialToMatch}
-        - Other matches between columns of dataFile and dataBaseFile: ${JSON.stringify(matches)}
+    You're given the following information: 
+      - data collection file (or sometimes, I call it dataFile): ${dataFile.name}
+      - database file: ${dataBaseFile.name}
+      - topic of interest: ${topic}
+      - initial match of columns between the two files: ${initialDataFileColumn} in dataFile corresponds to ${initialDataBaseColumn} in dataBaseFile.
+      - potential columns of data collection file to match with database file: ${potentialToMatch}
+      - Other matches between columns of dataFile and dataBaseFile: ${JSON.stringify(matches)}
 
-      Topic of interest: {topic}
-
-    Your task:
-    For each row in dataFile.csv, read the value in the ${dataFileColumn} column. Based on that value, find the corresponding value in the ${dataBaseFileColumn} column in dataBaseFile.csv.
-    There are three types of matches. For the examples being provided, assume the topic of interest is "Food":
-    1. Close match:
-      For a match to be considered close, it doesn't have to be an exact match, it just has be similar enough to be considered a close match. For example, if the value in the dataFile.csv is "Apple", it could match with "apple", "Apple", "APPLE", "apple ", "apple.", or
-      "apple, raw", "apple (raw)", etc. are all considered close matches. They have to be semantically equivalent, in which additional details that describe the topic of interest are ok, and it doesn't have to be an exact match. For such matches, inside the match confidence column, you should put 1. 
-      Other examples of close matches are:
-        DataFile Column | DataBaseFile Column | Polyphenol Match Confidence
-        Chickpea,	Chickpeas,	1
-        Long grain brown rice,	Brown Rice,	1 <- Close match because long grain brown rice is semantically equivalent to brown rice, even though it's not an exact match. The 'long grain' part is essentially just describing the topic of interest. 
-        Long grain white rice,	Doongara white Rice (SunRice CleverRice),	1 <- Close match because long grain white rice is semantically equivalent to Doongara white Rice, even though it's not an exact match. The 'long grain' part is essentially just describing the topic of interest. And doongara white rice is a type of white rice and a description of the topic of interest, so both values are semantically equivalent. 
-        Strawberry,		"Strawberry 100% Pure Fruite Spread, no added sugar", 1
-        carrot,	"Carrots, raw", 1 <- Close match because carrot is semantically equivalent to carrots, even though it's not an exact match. The 's' at the end is just a plural form of the topic of interest. And 'raw' is just a description of the topic of interest, so both values are semantically equivalent.
-        sweet potato, Sweet Potato Kumara,	1 <- Close match because sweet potato is semantically equivalent to Sweet Potato Kumara, even though it's not an exact match. The 'Kumara' part is just a description of the topic of interest, so both values are semantically equivalent.
-        brown lentils, "Lentils, brown, canned, drained, Edgell's™ brand",	1 <- Close match because brown lentils is semantically equivalent to Lentils, brown, canned, drained, Edgell's™ brand, even though it's not an exact match. The 'canned' and 'drained' parts are just a description of the topic of interest. Also, 'Edgell's™ brand' is just the company name that's selling the sweet potato, so it's a description as well. Since both values are semantically equivalent, we put a 1 inside the Confidence column.
-        red lentils, "Lentils, red, dried, boiled",	1 <- Close match because red lentils is semantically equivalent to Lentils, red, dried, boiled, even though it's not an exact match. The 'dried' and 'boiled' parts are just a description of the topic of interest. Since both values are semantically equivalent, we put a 1 inside the Confidence column.
-        Farmers Cheese, Chami (Cottage Cheese), 1 <- Although not the same, it's semantically the same. Farmer's cheese is essentialyl pressed cottage cheese, so it's not a different type of cheese. That's why we put a 1 inside the Confidence column.
-      You see how it's not an exact match, but it's close enough to be considered a close match in which they are semantically equivalent without addition irrelvant topics. It can contain a desciption of the information, but not adding another topic to the information.
+  
+    *** VERY IMPORTANT: Your're going to be making edits to the data collection file based on the information provided in the database file. ENSURE THAT THE OUTPUT OF THE EDITTED DATA COLLECTION FILE IS A VALID CSV FILE. AND NEVER MAKE EDITS TO THE COLUMN FROM THE DATA COLLECTION FILE THAT'S ALREADY THERE. YOU JUST HAVE TO FILL OUT THE EMPTY ROW AND COLUMNS IF FOUND *** 
     
-      2. Moderate match: 
-        Another instance of a match is a moderate match. A moderate match is when the value of interest in the dataFileColumn is found in the dataBaseFileColumn, but it has additional topics within the information. It's not describing the topic of interest, rather 
-        it's providing one to two more irrelvant topics. Or it's not mostly semantically equalivalent, but it's close enough to be considered a moderate match. For instances like this, input a 0 under the Confidence column.
-        Some examples of moderate matches are:
-          DataFile Column | DataBaseFile Column | Polyphenol Match Confidence 
-          Wheat Flour,	0.126666667	45% oat bran and 50% wheat flour bread,	0 <- Moderate match because wheat flour, which is the topic of interest, is found in the information, b
-          Quinoa,		Quinoa High Fiber Porridge,	0 -< Moderate match because quinoa is found in the information, other topics are also found. It's not describing the quinoa, but it's adding irrelavent topics to it, such as 'poridge' in this case.
-          buckwheat flour,	"Buckwheat bread, 50% dehusked buckwheat groats and 50% white wheat flour", 	0 <- Moderate match because buckwheat flour is found in the information, but other topics are also found. The additional information is not describing the buckwheat flour, rather it's adding irrelavent topics to it, such as 'bread' and 'groats' in this case. Since there were only within 1-2 additional topics, it's considered a moderate match.
-          pecorino romano cheese, Chami (cottage cheese), 0 <- Since they both are cheese, it's considered a match. But the fact that they are different types of cheese, it's not a close match. Although they aren't additional irrelevant topics in the dataBaseFile, since they're not semantically the same, it's not a close match.
-          goat milk butter,		Goat Milk Drink, Symbiotics Low GI, powder prepared with water	-1
-        You see how 
-      3. Low match:
-        A low match is when the value of interest in the dataFileColumn is found in the dataBaseFileColumn, but it has additional topics within the information and/or they're not close to being semantically equivalent. It's additional information isn't describing the topic of interest, rather adding 3 or more irrelvant topics to the information. For such matches, input -1 under the Confidence column.
-        Some examples of low matches are:
-          DataFile Column | DataBaseFile Column | Polyphenol Match Confidence
-          goat milk butter,		"Goat Milk Drink, Symbiotics Low GI, powder prepared with water", -1 <- Low match because goat milk butter is found in the information, but it's not describing the goat milk butter, rather it's adding irrelavent topics to it, such as 'drink', 'symbiotics', 'low GI', and 'powder prepared with water' in this case. Since there were more than 2 additional topics, it's considered a low match.
-    If there are multiple matches, choose the one that's the best match. A best 
-    match is con
+    Your task:
+      1) For each row in the dataFile, look at the ${initialDataFileColumn} column. If left blank, skip. If not left blank, find the corresponding value in the ${initialDataBaseColumn} column in dataBaseFile. This is the initial match that helps you understand how to match other columns.
+      There are three types of matches. For the examples being provided, assume the topic of interest is "Food". Here are the types of matches for the initial column match:
+        a) Close match:
+          For a match to be considered close, it doesn't have to be an exact match, it just has be similar enough to be considered a close match. For example, if the value in the dataFile.csv is "Apple", it could match with "apple", "Apple", "APPLE", "apple ", "apple.", or
+          "apple, raw", "apple (raw)", etc. are all considered close matches. They have to be semantically equivalent, in which additional details that describe the topic of interest are ok, and it doesn't have to be an exact match. For such matches, inside the match confidence column, you should put 1. 
+          Other examples of close matches are:
+            DataFile Column | DataBaseFile Column | Polyphenol Match Confidence
+            Chickpea,	Chickpeas,	1
+            Long grain brown rice,	Brown Rice,	1 <- Close match because long grain brown rice is semantically equivalent to brown rice, even though it's not an exact match. The 'long grain' part is essentially just describing the topic of interest. 
+            Long grain white rice,	Doongara white Rice (SunRice CleverRice),	1 <- Close match because long grain white rice is semantically equivalent to Doongara white Rice, even though it's not an exact match. The 'long grain' part is essentially just describing the topic of interest. And doongara white rice is a type of white rice and a description of the topic of interest, so both values are semantically equivalent. 
+            Strawberry,		"Strawberry 100% Pure Fruite Spread, no added sugar", 1
+            carrot,	"Carrots, raw", 1 <- Close match because carrot is semantically equivalent to carrots, even though it's not an exact match. The 's' at the end is just a plural form of the topic of interest. And 'raw' is just a description of the topic of interest, so both values are semantically equivalent.
+            sweet potato, Sweet Potato Kumara,	1 <- Close match because sweet potato is semantically equivalent to Sweet Potato Kumara, even though it's not an exact match. The 'Kumara' part is just a description of the topic of interest, so both values are semantically equivalent.
+            brown lentils, "Lentils, brown, canned, drained, Edgell's™ brand",	1 <- Close match because brown lentils is semantically equivalent to Lentils, brown, canned, drained, Edgell's™ brand, even though it's not an exact match. The 'canned' and 'drained' parts are just a description of the topic of interest. Also, 'Edgell's™ brand' is just the company name that's selling the sweet potato, so it's a description as well. Since both values are semantically equivalent, we put a 1 inside the Confidence column.
+            red lentils, "Lentils, red, dried, boiled",	1 <- Close match because red lentils is semantically equivalent to Lentils, red, dried, boiled, even though it's not an exact match. The 'dried' and 'boiled' parts are just a description of the topic of interest. Since both values are semantically equivalent, we put a 1 inside the Confidence column.
+            Farmers Cheese, Chami (Cottage Cheese), 1 <- Although not the same, it's semantically the same. Farmer's cheese is essentialyl pressed cottage cheese, so it's not a different type of cheese. That's why we put a 1 inside the Confidence column.
+          You see how it's not an exact match, but it's close enough to be considered a close match in which they are semantically equivalent without addition irrelvant topics. It can contain a desciption of the information, but not adding another topic to the information.
+        
+        b) Moderate match: 
+          Another instance of a match is a moderate match. A moderate match is when the value of interest in the dataFileColumn is found in the dataBaseFileColumn, but it has additional topics within the information. It's not describing the topic of interest, rather 
+          it's providing one to two more irrelvant topics. Or it's not mostly semantically equalivalent, but it's close enough to be considered a moderate match. For instances like this, input a 0 under the Confidence column.
+          Some examples of moderate matches are:
+            DataFile Column | DataBaseFile Column | Polyphenol Match Confidence 
+            Wheat Flour,	0.126666667	45% oat bran and 50% wheat flour bread,	0 <- Moderate match because wheat flour, which is the topic of interest, is found in the information, b
+            Quinoa,		Quinoa High Fiber Porridge,	0 -< Moderate match because quinoa is found in the information, other topics are also found. It's not describing the quinoa, but it's adding irrelavent topics to it, such as 'poridge' in this case.
+            buckwheat flour,	"Buckwheat bread, 50% dehusked buckwheat groats and 50% white wheat flour", 	0 <- Moderate match because buckwheat flour is found in the information, but other topics are also found. The additional information is not describing the buckwheat flour, rather it's adding irrelavent topics to it, such as 'bread' and 'groats' in this case. Since there were only within 1-2 additional topics, it's considered a moderate match.
+            pecorino romano cheese, Chami (cottage cheese), 0 <- Since they both are cheese, it's considered a match. But the fact that they are different types of cheese, it's not a close match. Although they aren't additional irrelevant topics in the dataBaseFile, since they're not semantically the same, it's not a close match.
+          
+        c) Low match:
+          A low match is when the value of interest in the dataFileColumn is found in the dataBaseFileColumn, but it has additional topics within the information and/or they're not close to being semantically equivalent. It's additional information isn't describing the topic of interest, rather adding 3 or more irrelvant topics to the information. For such matches, input -1 under the Confidence column.
+          Some examples of low matches are:
+            DataFile Column | DataBaseFile Column | Polyphenol Match Confidence
+            goat milk butter,		"Goat Milk Drink, Symbiotics Low GI, powder prepared with water", -1 <- Low match because goat milk butter is found in the information, but it's not describing the goat milk butter, rather it's adding irrelavent topics to it, such as 'drink', 'symbiotics', 'low GI', and 'powder prepared with water' in this case. Since there were more than 2 additional topics, it's considered a low match.
+            Fast Food Burger, "Soy, Burger", -1 <- Low match because fast food burger and soy burger, are although both burgers, they're both very semantically inequivalent. They're not describing each other, rather they're two different types of burgers. Since they're not semantically equivalent, it's considered a low match. But the fact that the word 'burger' is found in both values, it's still considered a match.
+            Cauliflower, "Lentil and cauliflower curry with rice", -1 <- Low match because although cauliflower is found in the information, it's not describing the cauliflower, rather it's adding irrelavent topics to it, such as 'lentil', 'curry', and 'rice' in this case. Since there were more than 2 additional topics, it's considered a low match.
+            Cucumber, "White rice (Satou Co. Ltd, Japan) with pickled vinegar and pickled cucumber, consumed together", -1 <- Low match because although cucumber is found in the information, it's not describing the cucumber, rather it's adding irrelavent topics to it, such as 'white rice', 'Satou Co. Ltd, Japan', 'pickled vinegar', and 'consumed together' in this case. Since there were more than 2 additional topics, it's considered a low match. And since cucumber isn't the biggest topic that's being described in the data base column. 
+            steel cut oats, "Porridge, made from steel-cut oats, cooked in water", -1 <- Low match because although steel cut oats is found in the information, it's not describing the steel cut oats, rather it's adding irrelavent topics to it, such as 'porridge', 'cooked', and 'in water' in this case. Since there were more than 2 additional topics, it's considered a low match.
+        
+        If there are multiple matches, choose the one that's the best match. The best match is considered to be Close Match, Moderate Match, and then Low Match in terms of order of preference. If there are multiple of the same type of matches, choose the one that is highest in preference, and if still multiple, then choose the one that appears first in the dataBaseFile. 
+        If there are no matches for the initial match, then put in the term "No Match Found" for the respective column in the dataFile, and go to the next one. 
 
-    Search for the  matching Food Name in dataBaseFile.csv (case-insensitive match, ignoring extra spaces, punctuation differences like hyphens vs. spaces, and bracketed descriptors like [Red] if necessary).
+        Sometimes, the data file might ask you for the initial match. If so, put that initial match found in the dataBaseFile in the respective column inside the data file csv. If not asking for it, the don't need write about the initial match that was found.
+      
+      2) If the initial match is found, proceed to match the other columns specified. Within that same row that's matched inside the data base file, look at the other columns. For every object inside the ${JSON.stringify(matches)} object, look at the key, which is the column from dataFile.csv, and look at the value, which is the column from dataBaseFile.csv. For each of these columns, if the cell in dataFile.csv is empty, fill it with the corresponding value from dataBaseFile.csv. If it's not empty, leave it as is.
+        If the value for a match is null, or None, or empty, then you don't have to worry about that column. 
 
-    When a match is found, take the corresponding Food ID from dataBaseFile.csv and insert it into that row’s Polyphenol Food ID column in dataFile.csv.
+      3) Now, if there is a confidence column inside the dataFile, then fill in 1 if it's a close match, 0 if it's a moderate match, and -1 if it's a low match. If there are multiple matches, choose the one that's the best match. The best match is considered to be Close Match, Moderate Match, and then Low Match in terms of order of preference. If there are multiple Close Matches, choose the one that appears first in the dataBaseFile. If there are no matches for the initial match, don't make edits to that row, and go to the next one. 
+      
+      4) If there is something like a comments column inside the dataFile, then answer to why you made the specific initial match, and the respective confidence score. 
+      
+      5) Repeat this process for every row in dataFile.csv, and make edits to the data file 
 
-    If no match is found, leave the Polyphenol Food ID cell as it is.
-
-    Preserve all other columns and rows exactly as they are.
-
-    Output the updated dataFile.csv with the filled Polyphenol Food ID values.
-
-    Special matching rules:
-
-    Match should be exact after applying case normalization and removing minor formatting differences.
-
-    If multiple matches exist in dataBaseFile.csv, choose the first one that appears in order.
-
-    Do not change the Polyphenol Match Confidence values — leave them as is.
-
-    Return the updated CSV as valid UTF-8 text.
+      VERY IMPORTANT: Return the updated CSV as valid UTF-8 text.
     `),
-    new HumanMessage(`Process the following files: ${dataFile} and ${dataBaseFile}`)
+    new HumanMessage(`Content of the files: 
+      - Here is the content of the data collection file: ${dataFileContent}.
+      - Here is the content of the database file: ${dataBaseContent}.
+    `)
   ];
   
   try {
     const response = await googleGemini.invoke(message);
     res.status(200).json({ 
       message: 'Files processed successfully', 
-      data: response 
+      data: response.content
     });
   } catch (error) {
     console.error('Error processing with Gemini:', error);
@@ -275,15 +296,15 @@ app.get('/extractData', async (req, res) => {
       error: error.message 
     });
   }
-  fs.rmdir(path.join(__dirname, 'uploads'), {
-    recursive: false
-  }).then(isfulFilled => {
-    console.log("Successfully deleted the upload directory.")
-    return;
-  }).catch(isRejected => {
-    console.log("Failed to delete the upload directory. ");
-    return;
-  });
+  // fs.rmdir(path.join(__dirname, 'uploads'), {
+  //   recursive: false
+  // }).then(isfulFilled => {
+  //   console.log("Successfully deleted the upload directory.")
+  //   return;
+  // }).catch(isRejected => {
+  //   console.log("Failed to delete the upload directory. ");
+  //   return;
+  // });
 });
   // Ask the user 
 
