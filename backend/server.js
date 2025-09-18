@@ -104,12 +104,14 @@ app.post(
       // // Read file contents
 
       //spliting the data from each lin
-
+      let dataFileSplit = [];
+      let dataBaseSplit = [];
       const dataFileContent = fs.readFile(dataFilePath, "utf8", (err, data) => {
         if (err) {
           console.error("Error reading dataFile:", err);
           return res.status(500).json({ message: "Error reading dataFile" });
         }
+        dataFileSplit = data.split("\n").filter(Boolean);
       });
 
       const dataBaseContent = fs.readFile(dataBaseFilePath, "utf8", (err, data) => {
@@ -117,10 +119,9 @@ app.post(
           console.error("Error reading dataBaseFile:", err);
           return res.status(500).json({ message: "Error reading dataBaseFile" });
         }
+        dataBaseSplit = data.split("\n").filter(Boolean);
       });
 
-      const dataFileSplit = dataFileContent.split("\n").filter(Boolean);
-      const dataBaseFileSplit = dataBaseFileContent.split("\n").filter(Boolean);
       // console.log("Data file split: " + dataFileSplit);
       // console.log("Data base file split: " + dataBaseFileSplit);
 
