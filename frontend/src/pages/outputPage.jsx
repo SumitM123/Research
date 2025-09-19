@@ -2,7 +2,7 @@ import React from "react";
 import axios from "axios";
 const { useColumnInfo } = require("../Contexts/columnInfoContext.js");
 const { useFilesInfo } = require("../Contexts/filesContext.js");
-
+import { useState } from "react";
 const OutputPage = () => {
     const columnInfo = useColumnInfo();
     const filesInfo = useFilesInfo();
@@ -39,3 +39,4 @@ const OutputPage = () => {
     </div>
   );
 }
+export default OutputPage;

@@ -104,7 +104,7 @@ function ColumnCollection(props) {
     const handleSelect = (e) => {
         //e.target references the specific dom element that triggered the event listener
         setSelectedValue(e.target.value);
-        if(usedDataBaseHeaders.has(e.target.value)) {
+        if(e.target.value !== "None" && e.target.value !== "Automated" && usedDataBaseHeaders.has(e.target.value)) {
             setWarning("Warning: this data base header has already been assigned to a different column");
         } else {
             setWarning("");
@@ -133,6 +133,7 @@ function ColumnCollection(props) {
                         </option>
                     ))}
                     <option value="None">None</option>
+                    <option value="Automated">Automated</option>
                 </select>
                 {warning && (
                     <div className="collect-details-warning" style={{ color: 'red', fontSize: '0.95rem', marginTop: '0.25rem' }}>
@@ -148,7 +149,7 @@ function ColumnCollection(props) {
             setMatches(prevValue => [...prevValue, {dataFileColumn: key, dataBaseFileColumn: value}]);
         }
         setInitialTopicMatch(topicMatch)
-        navigate('/outputPage');
+        navigate('/output');
     }
 
     return (

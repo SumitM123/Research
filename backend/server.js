@@ -77,6 +77,7 @@ app.post(
     { name: "dataBaseFile", maxCount: 1 },
   ]),
   async (req, res) => {
+
     try {
       // Ensure both files exist
       if (!req.files || !req.files.dataFile || !req.files.dataBaseFile) {
@@ -134,55 +135,67 @@ app.post(
       }
 
       // Extract headers + first row
-      
-      
-
       //const dataFileHeaders = dataFileSplit[0].split(",").map((h) => h.trim());
-      let dataFileHeaders = [];
-      let dataFileHeaderString = dataFileSplit[0];
-      let currentHeader = "";
-      let quotation = false;
-      for(let i = 0; i < dataFileHeaderString.length; i++) {
-        if(dataFileHeaderString[i] === '"') {
-          quotation = !quotation;
-          continue;
+      const getHeaders = (dataString) => {
+        let headers = [];
+        let currentHeader = "";
+        //let quotation = false;
+        // for(let i = 0; i < dataString.length; i++) {
+        //   if(dataString[i] === '"') {
+        //     quotation = !quotation;
+        //     continue;
+        //   }
+        //   if(dataString[i] === "," && quotation) {
+        //     currentHeader += dataString[i];
+        //   } else if (dataString[i] === "," && !quotation) {
+            
+        //     headers.push(currentHeader.trim());
+        //     currentHeader = "";
+        //   } else if(dataString[i] !== ",") {
+        //     currentHeader += dataString[i];
+        //   }
+        // }
+        for(let i = 0; i < dataString.length; i++) { 
+          if(dataString[i] === '"') {
+            let j = i + 1;
+            currentHeader = '"';
+            while(j < dataString.length && dataString[j] !== '"') {
+              currentHeader += dataString[j];
+              j++;
+            }
+            currentHeader = currentHeader.trim();
+            currentHeader += '"';
+            if(currentHeader !== '""' && currentHeader !== "") {
+              headers.push(currentHeader);
+            }
+            currentHeader = "";
+            i = j;
+            continue;
+          } else if(dataString[i] === ",") {
+            const trimmedHeader = currentHeader.trim();
+            if(trimmedHeader !== "" && trimmedHeader !== '""') {
+              headers.push(trimmedHeader);
+            }
+            currentHeader = "";
+          } else if(dataString[i] !== "," && dataString[i] !== '"') {
+            currentHeader += dataString[i];
+          }
         }
-        if(dataFileHeaderString[i] === "," && quotation) {
-          currentHeader += dataFileHeaderString[i];
-        } else if (dataFileHeaderString[i] === "," && !quotation) {
-          dataFileHeaders.push(currentHeader.trim());
+        if(currentHeader !== "") {
+          headers.push(currentHeader.trim());
           currentHeader = "";
-        } else if(dataFileHeaderString[i] !== ",") {
-          currentHeader += dataFileHeaderString[i];
         }
+        return headers;
       }
-      //const dataBaseFileHeaders = dataBaseFileSplit[0].split(",").map((h) => h.trim());
-      let dataBaseFileHeaders = [];
-      let dataBaseFileHeaderString = dataBaseFileSplit[0];
-      currentHeader = "";
-      quotation = false;  
-      for(let i = 0; i < dataBaseFileHeaderString.length; i++) {
-        if(dataBaseFileHeaderString[i] === '"') {
-          quotation = !quotation;
-          continue;
-        }
-        if (dataBaseFileHeaderString[i] === "," && quotation) {
-          currentHeader += dataBaseFileHeaderString[i];
-        } else if (dataBaseFileHeaderString[i] === "," && !quotation) {
-          dataBaseFileHeaders.push(currentHeader.trim());
-          currentHeader = "";
-        } else if(dataBaseFileHeaderString[i] !== ",") {
-          currentHeader += dataBaseFileHeaderString[i];
-        }
-      }
-      console.log("Data file headers: " + dataFileHeaders);
-      console.log("Data base file headers: " + dataBaseFileHeaders);
-
-      const dataFileRow = dataFileSplit[1]?.split(",") || [];
-      const dataBaseFileRow = dataBaseFileSplit[1]?.split(",") || [];
-
-      console.log("Data file first row: " + dataFileRow);
-      console.log("Data base file first row: " + dataBaseFileRow);
+      const dataFileHeaders = getHeaders(dataFileSplit[0]);
+      const dataBaseFileHeaders = getHeaders(dataBaseFileSplit[0]);
+      
+      const dataFileRow = getHeaders(dataFileSplit[1] || "");
+      console.log("Data file headers: " + dataFileHeaders + " Length of data file headers: " + dataFileHeaders.length); //good
+      console.log("Data base file headers: " + dataBaseFileHeaders + " Length of data base file headers: " + dataBaseFileHeaders.length); //good
+      console.log("Data file first row: " + dataFileRow + " Length of data file first row: " + dataFileRow.length); //bad
+      //const dataFileRow = dataFileSplit[1]?.split(",") || [];
+      //const dataBaseFileRow = dataBaseFileSplit[1]?.split(",") || [];
       // // Ensure chosen columns exist in headers
       // if (!dataFileHeaders.includes(dataFileColumn)) {
       //   return res.status(400).json({
@@ -267,9 +280,10 @@ app.get('/extractData', async (req, res) => {
     
     Your task:
       1) For each row in the dataFile, look at the ${initialDataFileColumn} column. If left blank, skip. If not left blank, find the corresponding value in the ${initialDataBaseColumn} column in dataBaseFile. This is the initial match that helps you understand how to match other columns.
-      There are three types of matches. For the examples being provided, assume the topic of interest is "Food". Here are the types of matches for the initial column match:
-        a) Close match:
-          For a match to be considered close, it doesn't have to be an exact match, it just has be similar enough to be considered a close match. For example, if the value in the dataFile.csv is "Apple", it could match with "apple", "Apple", "APPLE", "apple ", "apple.", or
+            const trimmedHeader = currentHeader.trim();
+            if(trimmedHeader !== "" && trimmedHeader !== '""') {
+              headers.push(trimmedHeader);
+            }
           "apple, raw", "apple (raw)", etc. are all considered close matches. They have to be semantically equivalent, in which additional details that describe the topic of interest are ok, and it doesn't have to be an exact match. For such matches, inside the match confidence column, you should put 1. 
           Other examples of close matches are:
             DataFile Column | DataBaseFile Column | Polyphenol Match Confidence
@@ -311,7 +325,8 @@ app.get('/extractData', async (req, res) => {
       
       2) If the initial match is found, proceed to match the other columns specified. Within that same row that's matched inside the data base file, look at the other columns. For every object inside the ${JSON.stringify(matches)} object, look at the key, which is the column from dataFile.csv, and look at the value, which is the column from dataBaseFile.csv. For each of these columns, if the cell in dataFile.csv is empty, fill it with the corresponding value from dataBaseFile.csv. If it's not empty, leave it as is.
         If the value for a match is null, or None, or empty, then you don't have to worry about that column. 
-
+        If the value for a match is "Automated", it's likely to be Confidence or Comments column. For Confidence column, fill it with 1 if it's a close match, 0 if it's a moderate match, and -1 if it's a low match. For Comments column, answer to why you made the specific initial match, and the respective confidence score.
+      
       3) Now, if there is a confidence column inside the dataFile, then fill in 1 if it's a close match, 0 if it's a moderate match, and -1 if it's a low match. If there are multiple matches, choose the one that's the best match. The best match is considered to be Close Match, Moderate Match, and then Low Match in terms of order of preference. If there are multiple Close Matches, choose the one that appears first in the dataBaseFile. If there are no matches for the initial match, don't make edits to that row, and go to the next one. 
       
       4) If there is something like a comments column inside the dataFile, then answer to why you made the specific initial match, and the respective confidence score. 
@@ -320,6 +335,7 @@ app.get('/extractData', async (req, res) => {
 
       VERY IMPORTANT: Return the updated CSV as valid UTF-8 text.
     `),
+
     new HumanMessage(`Content of the files: 
       - Here is the content of the data collection file: ${dataFileContent}.
       - Here is the content of the database file: ${dataBaseContent}.
@@ -348,6 +364,23 @@ app.get('/extractData', async (req, res) => {
   //   console.log("Failed to delete the upload directory. ");
   //   return;
   // });
+  console.log("Data File path: " + dataFile.path);
+  console.log("Data Base File path: " + dataBaseFile.path);
+  // Delete the files after processing
+  fs.unlink(dataFile.path, (err => {
+    if(err) {
+      console.error("Error deleting dataFile:", err);
+    } else {
+      console.log("Successfully deleted dataFile");
+    } 
+  }));
+  fs.unlink(dataBaseFile.path, (err => {
+    if(err) {
+      console.error("Error deleting dataBaseFile:", err);
+    } else {
+      console.log("Successfully deleted dataBaseFile");
+    }
+  }));
 });
   // Ask the user 
 
