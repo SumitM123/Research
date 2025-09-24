@@ -149,7 +149,7 @@ function ColumnCollection(props) {
             setMatches(prevValue => [...prevValue, {dataFileColumn: key, dataBaseFileColumn: value}]);
         }
         setInitialTopicMatch(topicMatch)
-        navigate('/loadingPage');
+        navigate('/loading');
     }
 
     return (

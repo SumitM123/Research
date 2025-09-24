@@ -428,6 +428,46 @@ app.post('/extractData', async (req, res) => {
     console.warn("dataBaseFile already deleted.");
   }
 });
+app.post('/createDownload', async (req, res) => {
+  //editedDataFile is an array. I need to convert it to a string
+  const {editedDataFile} = req.body;
+  const fileName = `edited_dataFile_${Date.now()}.csv`;
+  const filePath = path.join(__dirname, "/uploads", fileName);
+  var editedDataFileString = "";
+  for(const row of editedDataFile) {
+    let rowString = row + "\n";
+    editedDataFileString += rowString;
+  }
+  try {
+    await fsPromises.writeFile(filePath, editedDataFileString, 'utf8');
+    console.log("Successfully created download file");
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.status(200).sendFile(filePath, async (err) => {
+      if (err) {
+        console.error("Error sending file:", err);
+      } else {
+        console.log("File sent successfully.");
+      }
+      
+      // Attempt to delete the file regardless of whether the send succeeded
+      try {
+        await fsPromises.unlink(filePath);
+        console.log("Successfully deleted temp file.");
+      } catch (unlinkErr) {
+        if (unlinkErr.code === 'ENOENT') {
+          console.warn("Attempted to delete a file that was already gone.");
+        } else {
+          console.error("Error deleting file:", unlinkErr);
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error("Error creating download file:", error);
+    res.status(500).json({ message: "Error creating or sending download file", error: error.message });
+  }
+});
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });

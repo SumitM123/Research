@@ -52,7 +52,6 @@ function App() {
     formData.append('topic', topic);
 
     //console.log("Data file object: " + JSON.stringify(dataFile));
-    navigate('/loading');
     try {
       const response = await axios.post("/processFiles", formData, {
         headers: {
