@@ -11,10 +11,19 @@
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "build": "cd frontend && npm run build"
   },
-  "keywords": ["mern", "mongodb", "express", "react", "node"],
+  "keywords": [
+    "mern",
+    "mongodb",
+    "express",
+    "react",
+    "node"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@langchain/google-genai": "^0.2.18"
   }
 }

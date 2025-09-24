@@ -1,20 +1,42 @@
-require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const multer = require('multer');
-const { ChatGoogleGenerativeAI } = require("@langchain/google-genai");
-const { SystemMessage, HumanMessage } = require('@langchain/core/messages');
-const papa = require('papaparse');  // For CSV parsing
-const googleGemini = new ChatGoogleGenerativeAI({ 
-  model: "gemini-pro",
-  apiKey: process.env.GEMINI_API_KEY
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config({ path: './.env' });
+
+// Node built-in modules
+import fs from 'fs';
+import fsPromises from 'fs/promises';
+import path from 'path';
+import { createRequire } from 'module'; // Only needed if you must use require for some legacy package
+
+// Express and middleware
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import multer from 'multer';
+import { fileURLToPath } from 'url';
+
+// Convert import.meta.url to __filename
+const __filename = fileURLToPath(import.meta.url);
+
+// Derive __dirname from __filename
+const __dirname = path.dirname(__filename);
+
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { SystemMessage, HumanMessage } from '@langchain/core/messages';
+
+import { GoogleGenAI  } from '@google/genai';
+
+
+const googleGemini = new ChatGoogleGenerativeAI({
+  model: "gemini-2.5-flash",
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
+const client = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -173,7 +195,7 @@ app.post(
             continue;
           } else if(dataString[i] === ",") {
             const trimmedHeader = currentHeader.trim();
-            if(trimmedHeader !== "" && trimmedHeader !== '""') {
+            if (trimmedHeader !== "" && trimmedHeader !== '""') {   // FIX: skip empty values
               headers.push(trimmedHeader);
             }
             currentHeader = "";
@@ -181,9 +203,9 @@ app.post(
             currentHeader += dataString[i];
           }
         }
-        if(currentHeader !== "") {
-          headers.push(currentHeader.trim());
-          currentHeader = "";
+        const trimmedHeader = currentHeader.trim();  // FIX: check before pushing last one
+        if (trimmedHeader !== "" && trimmedHeader !== '""') {
+          headers.push(trimmedHeader);
         }
         return headers;
       }
@@ -261,15 +283,13 @@ app.post(
   }
 );
 
-app.get('/extractData', async (req, res) => {
-  const {dataFile, dataBaseFile, topic, initialDataFileColumn, initialDataBaseColumn, potentialToMatch, matches} = req.params;  
-  message = [
-    new SystemMessage(`
-    You are a helpful assistant that extracts data from CSV files.
+app.post('/extractData', async (req, res) => {
+  const {dataFile, dataBaseFile, topic, initialDataFileColumn, initialDataBaseColumn, potentialToMatch, matches, dataBaseContent, dataFileContent} = req.body;
+  const prompt = ` "You are a CSV editing bot. Your only function is to take data and instructions and return a valid, edited CSV file as plain text. You do not provide commentary or code."
       
     You're given the following information: 
-      - data collection file (or sometimes, I call it dataFile): ${dataFile.name}
-      - database file: ${dataBaseFile.name}
+      - data collection file (or sometimes, I call it dataFile): ${dataFile}
+      - database file: ${dataBaseFile}
       - topic of interest: ${topic}
       - initial match of columns between the two files: ${initialDataFileColumn} in dataFile corresponds to ${initialDataBaseColumn} in dataBaseFile.
       - potential columns of data collection file to match with database file: ${potentialToMatch}
@@ -334,70 +354,83 @@ app.get('/extractData', async (req, res) => {
       5) Repeat this process for every row in dataFile.csv, and make edits to the data file 
 
       VERY IMPORTANT: Return the updated CSV as valid UTF-8 text.
-    `),
 
-    new HumanMessage(`Content of the files: 
-      - Here is the content of the data collection file: ${dataFileContent}.
-      - Here is the content of the database file: ${dataBaseContent}.
-    `)
-  ];
-  
+      ** HERE IS THE CONTENTS OF THE FILES **: 
+       - Here is the content of the data collection file: ${dataFileContent}.
+       - Here is the content of the database file: ${dataBaseContent}.
+      
+      ** DO NOT ** use any markdown formatting, including triple backticks, in your response. Just return the plain editted CSV text of the data file content. 
+      ** DO NOT ** provide code or pseudocode for the process.
+    `
+    ;
   try {
-    const response = await googleGemini.invoke(message);
-    res.status(200).json({ 
-      message: 'Files processed successfully', 
-      data: response.content
+    console.log("Processing with Gemini...");
+
+    const response = await client.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
     });
+
+    /* THIS WORKS. Model is connected */
+    // const response = await client.models.generateContent({
+    //   model: "gemini-2.5-flash",
+    //   contents: "Hello, what's your model name?",
+    // })
+
+    const generatedText = response.text || "No output generated";
+
+    res.status(200).json({
+      message: "Files processed successfully",
+      data: generatedText
+    });
+
+    console.log("Successfully processed with Gemini");
+
   } catch (error) {
-    console.error('Error processing with Gemini:', error);
-    res.status(500).json({ 
-      message: 'Error processing files', 
-      error: error.message 
+    console.error("Error processing with Gemini:", error);
+    res.status(500).json({
+      message: "Error processing files",
+      error: error.message
     });
   }
-  // fs.rmdir(path.join(__dirname, 'uploads'), {
-  //   recursive: false
-  // }).then(isfulFilled => {
-  //   console.log("Successfully deleted the upload directory.")
-  //   return;
-  // }).catch(isRejected => {
-  //   console.log("Failed to delete the upload directory. ");
-  //   return;
-  // });
-  console.log("Data File path: " + dataFile.path);
-  console.log("Data Base File path: " + dataBaseFile.path);
-  // Delete the files after processing
-  fs.unlink(dataFile.path, (err => {
-    if(err) {
-      console.error("Error deleting dataFile:", err);
-    } else {
+  const dataFilePath = path.join(__dirname, "uploads", dataFile);
+  const dataBasePath = path.join(__dirname, "uploads", dataBaseFile);
+  console.log("Data File path: " + dataFilePath);
+  console.log("Data Base File path: " + dataBasePath);
+  // if (fs.existsSync(dataFilePath)) {
+  //   try {
+  //     await fs.unlink(dataFilePath);
+  //     console.log("Successfully deleted dataFile");
+  //   } catch (err) {
+  //     console.error("Error deleting dataFile:", err);
+  //   }
+  // } else {
+  //   console.warn("dataFile already deleted.");
+  // }
+  if (fs.existsSync(dataFilePath)) {
+    try {
+      await fsPromises.unlink(dataFilePath);
       console.log("Successfully deleted dataFile");
-    } 
-  }));
-  fs.unlink(dataBaseFile.path, (err => {
-    if(err) {
-      console.error("Error deleting dataBaseFile:", err);
-    } else {
-      console.log("Successfully deleted dataBaseFile");
+    } catch (err) {
+      console.error("Error deleting dataFile:", err);
     }
-  }));
+  } else {
+    console.warn("dataFile already deleted.");
+  }
+  if (fs.existsSync(dataBasePath)) {
+    try {
+      await fsPromises.unlink(dataBasePath);
+      console.log("Successfully deleted dataBaseFile");
+    } catch (err) {
+      console.error("Error deleting dataBaseFile:", err);
+    }
+  } else {
+    console.warn("dataBaseFile already deleted.");
+  }
 });
-  // Ask the user 
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
-  });
-});
-
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
-
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}`);
