@@ -10,8 +10,11 @@ const OutputPage = () => {
     const [urlDownload, setUrlDownload] = useState("");
     useEffect(() => {
         //you're getting a file
-        const fetchData = axios.post('http://localhost:5000/createDownload', { editedDataFile: outputFromServer });
-        setUrlDownload(URL.createObjectURL(new Blob([outputFromServer], { type: 'text/csv' })));
+        const fetchData = async () => {
+          const response = await axios.post('http://localhost:5000/createDownload', { editedDataFile: outputFromServer }, { responseType: 'blob' });
+          setUrlDownload(URL.createObjectURL(new Blob([response.data], { type: 'text/csv' })));
+        };
+        fetchData();
     }, []);
   return (
     <div>
