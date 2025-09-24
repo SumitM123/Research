@@ -3,8 +3,8 @@ import { useEffect, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useColumnInfo } from '../Contexts/columnInfoContext.js';
 import { useFilesInfo } from '../Contexts/filesContext.js';
+import axios from 'axios';
 import Papa from 'papaparse';
-const axios = require('axios');
 const loaderStyle = {
   display: 'flex',
   flexDirection: 'column',
@@ -46,7 +46,7 @@ const LoadingPage = () => {
   const columnInfo = useColumnInfo();
   const filesInfo = useFilesInfo();
   const result = async () => {
-    if(!fileInfo || !columnInfo) {
+    if(!filesInfo || !columnInfo) {
       console.error("File info or column info is missing");
       return;
     }
@@ -63,8 +63,7 @@ const LoadingPage = () => {
         dataFileContent: columnInfo.dataFileContent
       };
       console.log("Before asking to extract data")
-      const response = await axios.post(
-        "http://localhost:5000/extractData",
+      const response = await axios.post('/extractData',
         objectToSend,
         { headers: { "Content-Type": "application/json" } }
       );
@@ -77,7 +76,6 @@ const LoadingPage = () => {
     }
   };
   useEffect(() => {
-    if (!columnInfo.initialTopicMatch || columnInfo.matches.length === 0) return;
     result();
   }, [columnInfo.initialTopicMatch, columnInfo.matches]);
   return (
