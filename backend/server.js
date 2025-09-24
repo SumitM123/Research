@@ -450,7 +450,6 @@ app.post('/createDownload', async (req, res) => {
         console.log("File sent successfully.");
       }
       
-      // Attempt to delete the file regardless of whether the send succeeded
       try {
         await fsPromises.unlink(filePath);
         console.log("Successfully deleted temp file.");

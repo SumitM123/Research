@@ -46,6 +46,10 @@ const LoadingPage = () => {
   const columnInfo = useColumnInfo();
   const filesInfo = useFilesInfo();
   const result = async () => {
+    if(!fileInfo || !columnInfo) {
+      console.error("File info or column info is missing");
+      return;
+    }
     try {
       const objectToSend = {
         dataFile: filesInfo.dataFile.name,
@@ -73,8 +77,9 @@ const LoadingPage = () => {
     }
   };
   useEffect(() => {
+    if (!columnInfo.initialTopicMatch || columnInfo.matches.length === 0) return;
     result();
-  }, []);
+  }, [columnInfo.initialTopicMatch, columnInfo.matches]);
   return (
   <div style={loaderStyle}>
     <style>
